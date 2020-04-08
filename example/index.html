@@ -5,7 +5,7 @@
         body {
             margin: 0;
             padding: 0;
-            background: #000;
+            background: #333;
         }
 
         video {
@@ -38,6 +38,17 @@
             color:#fff;
             text-align: center;
         }
+        .dominates{
+            position: absolute;
+            z-index: 1000;
+            top: 6em;
+            right: 1rem;
+            width: 200px;
+            padding: 1rem;
+            color:#fff;
+            background-color: rgb( 0, 177, 64);
+            text-align: center;
+        }
 
     </style>
 </head>
@@ -51,6 +62,11 @@
         Perfect backgrond color
         (mask)
     </div>
+
+    <div class="dominates">
+        Detected dominating color
+    </div>
+
     <video id="example" autoplay controls>
     </video>
 

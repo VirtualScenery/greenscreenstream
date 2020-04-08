@@ -1,4 +1,7 @@
 import { DR } from 'demolishedrenderer';
+import quantize from 'quantize'
+
+
 
 export class GreenScreenStream {
 
@@ -92,6 +95,32 @@ export class GreenScreenStream {
                 this.renderer.aB("A", this.mainVert, this.bufferFrag, ["webcam", "background"]);
             });
     }
+
+    /**
+     * Get the most dominant color a list (palette) of the colors most common in the provied MediaStreamTrack
+     *
+     * @returns {{ palette: any, dominant: any }}
+     * @memberof GreenScreenStream
+     */
+    getColorsFromStream(): { palette: any, dominant: any } {
+        let glCanvas = this.canvas;
+        let tempCanvas = document.createElement("canvas");
+        tempCanvas.width = glCanvas.width;
+        tempCanvas.height = glCanvas.height;
+        let ctx = tempCanvas.getContext("2d");
+        ctx.drawImage(this.video, 0, 0);
+        
+        let imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+  
+        const pixels = this.canvas.width * this.canvas.height;
+
+        return {
+            palette: this.pallette(imageData, pixels),
+            dominant: this.dominant(imageData, pixels);
+        }
+
+    }
+
     /**
      * Start render the new media stream
      *
@@ -137,6 +166,37 @@ export class GreenScreenStream {
     static getInstance(backgroudImage: string, canvas?: HTMLCanvasElement, width?: number, height?: number): GreenScreenStream {
         return new GreenScreenStream(backgroudImage, canvas, width, height);
     }
+
+    private pixelArray(pixels: any, pixelCount: number, quality: number): Array<number> {
+        const pixelArray = [];
+
+        for (let i = 0, offset, r, g, b, a; i < pixelCount; i = i + quality) {
+            offset = i * 4;
+            r = pixels[offset + 0];
+            g = pixels[offset + 1];
+            b = pixels[offset + 2];
+            a = pixels[offset + 3]
+            if (typeof a === 'undefined' || a >= 125) {
+                if (!(r > 250 && g > 250 && b > 250)) {
+                    pixelArray.push([r, g, b]);
+                }
+            }
+        }
+
+        return pixelArray;
+    }
+    dominant(imageData: ImageData, pixelCount: number) {
+        const p = this.pallette(imageData, pixelCount);
+        const d = p[0];
+        return d;
+    };
+    pallette(imageData: ImageData, pixelCount: number) {
+
+        const pixelArray = this.pixelArray(imageData.data, pixelCount, 10);
+        const cmap = quantize(pixelArray, 8);
+        const palette = cmap ? cmap.palette() : null;
+        return palette;
+    };
 }
 
 
