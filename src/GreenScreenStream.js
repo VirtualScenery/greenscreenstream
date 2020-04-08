@@ -2,6 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const demolishedrenderer_1 = require("demolishedrenderer");
 class GreenScreenStream {
+    /**
+     *Creates an instance of GreenScreenStream.
+     * @param {string} backgroudImage backgound image that replaces the "green"
+     * @param {HTMLCanvasElement} [canvas] HTML5 Canvas element to render to, optional
+     * @param {number} [width] width of the HTML5 Canvas element, optional.
+     * @param {number} [height] height of the HTML5 Canvas element, optional.
+     * @memberof GreenScreenStream
+     */
     constructor(backgroudImage, canvas, width, height) {
         this.mainFrag = `uniform vec2 resolution;
     uniform sampler2D A;
@@ -86,9 +94,21 @@ class GreenScreenStream {
             this.renderer.aB("A", this.mainVert, this.bufferFrag, ["webcam", "background"]);
         });
     }
+    /**
+     * Start render the new media stream
+     *
+     * @param {number} [fps] Frames per second
+     * @memberof GreenScreenStream
+     */
     render(fps) {
         this.renderer.run(0, fps || 25);
     }
+    /**
+     * Add a MediaStreamTrack track (i.e webcam )
+     *
+     * @param {MediaStreamTrack} track
+     * @memberof GreenScreenStream
+     */
     addVideoTrack(track) {
         this.mediaStream.addTrack(track);
         this.video = document.createElement("video");
@@ -96,9 +116,26 @@ class GreenScreenStream {
         this.video.srcObject = this.mediaStream;
         this.video.play();
     }
+    /**
+     * Capture the rendered result to a MediaStream
+     *
+     * @param {number} [fps] Frames per second
+     * @returns {MediaStream}
+     * @memberof GreenScreenStream
+     */
     captureStream(fps) {
         return this.canvas["captureStream"](fps || 25);
     }
+    /**
+     *  Get an instance instance of GreenScreenStream.
+     * @static
+      * @param {string} backgroudImage backgound image that replaces the "green"
+     * @param {HTMLCanvasElement} [canvas] HTML5 Canvas element to render to, optional
+     * @param {number} [width] width of the HTML5 Canvas element, optional.
+     * @param {number} [height] height of the HTML5 Canvas element, optiona
+     * @returns {GreenScreenStream}
+     * @memberof GreenScreenStream
+     */
     static getInstance(backgroudImage, canvas, width, height) {
         return new GreenScreenStream(backgroudImage, canvas, width, height);
     }

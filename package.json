@@ -9,6 +9,7 @@
   "author": "Magnus Thor",
   "license": "MIT",
   "dependencies": {
+    "@types/webgl2": "0.0.5",
     "demolishedrenderer": "^2.1.0-beta.2"
   }
 }
