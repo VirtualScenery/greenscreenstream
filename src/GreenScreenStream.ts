@@ -32,30 +32,20 @@ export class GreenScreenStream {
 
     void mainImage( out vec4 fragColor, in vec2 fragCoord )
     {
-	const int samples = 10;
-	const float dp = 0.1;
-	float rad = 0.02;
-    vec2 uv = 1. -fragCoord.xy / resolution.xy;
-
-    vec4 fg = texture(webcam,uv);
-	vec4 bg = texture(background,-uv);	
-	vec3 blur = vec3(0.0);
-	for (int i = -samples; i < samples; i++)
-	{
-		for (int j = -samples; j < samples; j++)
-		{
-			blur += texture(webcam, uv + vec2(i, j) * (rad/float(samples))).xyz
-				 / pow(float(samples) * 2.0, 2.0);
-		}
-	}
-	vec4 raw = vec4 (vec3(blur[1]-blur[0]),1.0);
-
-	vec4 normal = clamp((1.0-(raw*10.0)),0.0,1.0);
-
-	fg.g = clamp (fg.g, 0.0, fg.r-dp);
-
-
-	fragColor = (normal * fg)+((1.0-normal) * bg);
+        vec2 q = 1. - fragCoord.xy / resolution.xy;
+    
+        vec3 bg = texture( background, q ).xyz;
+        vec3 fg = texture( webcam, q ).xyz;
+        
+        float maxrb = max( fg.r, fg.b );
+        
+        float k = clamp( (fg.g-maxrb)*5.0, 0.0, 1.0 );
+                
+        float ll = length( fg );
+        fg.g = min( fg.g, maxrb*0.8 );
+        fg = ll*normalize(fg);
+    
+        fragColor = vec4( mix(fg, bg, k), 1.0 );
 }
 
     void main(){    
