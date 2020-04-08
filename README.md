@@ -15,7 +15,7 @@ All rendering is made realtime using a WebGL2 pixel shader (glsl) .
 4.   
 ## install
 
-npm install greenscreenstream  
+    npm install greenscreenstream  
 
 ## demo
  [https://coloquium.github.io/greenscreenstream/example/](https://coloquium.github.io/greenscreenstream/example/)
@@ -51,6 +51,35 @@ Capture the rendered result to a MediaStream that you apply to your `<video>` el
 
     captureStream(fps?:  number):  MediaStream;
     
+
+### getColorsFromStream
+
+Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack.
+
+     getColorsFromStream(): { palette: any, dominant: any } {
+
+### setDominanColor
+
+Pass a mask (rgb), color to the shader , to use as a mask.   Should be the `dominant color`, or on of the `palette` colors detected. See `getColorsFromStream` 
+
+
+        setDominanColor(r: number, g: number, b: number, threshold?: number): void;
+ 
+
+###  dominant
+
+Get the most dominant color based on imageData and number of pixels
+
+    dominant(imageData: ImageData, pixelCount: number) {
+
+### palette
+
+   Get an Array of the most siginficant colors in the MediaTrack
+
+
+    pallette(imageData: ImageData, pixelCount: number) {
+
+
 ### getInstance
 
     static  getInstance(backgroudImage:  string,
@@ -70,6 +99,8 @@ WebGL2 Rendering context
 
 ### renderer:  DR;
 DR is the WebGL Rendering engine used, to perform pixel maipulations.
+
+> DR is the demolishedRender , see https://github.com/MagnusThor/demolishedRenderer 
 
 ### mediaStream:  MediaStream;
 

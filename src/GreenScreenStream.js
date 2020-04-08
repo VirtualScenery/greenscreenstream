@@ -88,6 +88,15 @@ class GreenScreenStream {
             this.renderer.aB("A", this.mainVert, this.bufferFrag, ["webcam", "background"]);
         });
     }
+    setDominanColor(r, g, b, threshold) {
+        throw "not yet implemented";
+    }
+    /**
+     * Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack
+     *
+     * @returns {{ palette: any, dominant: any }}
+     * @memberof GreenScreenStream
+     */
     getColorsFromStream() {
         let glCanvas = this.canvas;
         let tempCanvas = document.createElement("canvas");
@@ -163,12 +172,28 @@ class GreenScreenStream {
         }
         return pixelArray;
     }
+    /**
+     *
+     *
+     * @param {ImageData} imageData
+     * @param {number} pixelCount
+     * @returns
+     * @memberof GreenScreenStream
+     */
     dominant(imageData, pixelCount) {
         const p = this.pallette(imageData, pixelCount);
         const d = p[0];
         return d;
     }
     ;
+    /**
+     *
+     *
+     * @param {ImageData} imageData
+     * @param {number} pixelCount
+     * @returns
+     * @memberof GreenScreenStream
+     */
     pallette(imageData, pixelCount) {
         const pixelArray = this.pixelArray(imageData.data, pixelCount, 10);
         const cmap = quantize_1.default(pixelArray, 8);

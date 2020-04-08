@@ -18,6 +18,17 @@ export declare class GreenScreenStream {
      * @memberof GreenScreenStream
      */
     constructor(backgroudImage: string, canvas?: HTMLCanvasElement, width?: number, height?: number);
+    setDominanColor(r: number, g: number, b: number, threshold?: number): void;
+    /**
+     * Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack
+     *
+     * @returns {{ palette: any, dominant: any }}
+     * @memberof GreenScreenStream
+     */
+    getColorsFromStream(): {
+        palette: any;
+        dominant: any;
+    };
     /**
      * Start render the new media stream
      *
@@ -51,4 +62,7 @@ export declare class GreenScreenStream {
      * @memberof GreenScreenStream
      */
     static getInstance(backgroudImage: string, canvas?: HTMLCanvasElement, width?: number, height?: number): GreenScreenStream;
+    private pixelArray;
+    dominant(imageData: ImageData, pixelCount: number): any;
+    pallette(imageData: ImageData, pixelCount: number): any;
 }
