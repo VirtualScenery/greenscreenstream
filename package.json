@@ -1,0 +1,14 @@
+{
+  "name": "greenscreenstream",
+  "version": "1.0.0-beta.1",
+  "description": "Genereate new MediaStreams or Canvas elements based on MediaStreams (webcam ) with any background image. Green screen your webcam!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Magnus Thor",
+  "license": "MIT",
+  "dependencies": {
+    "demolishedrenderer": "^2.1.0-beta.2"
+  }
+}
