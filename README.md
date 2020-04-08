@@ -18,7 +18,7 @@ All rendering is made realtime using a WebGL2 pixel shader (glsl) .
 npm install greenscreenstream  
 
 ## demo
- [https://magnusthor.github.io/greenscreenstream/example](https://magnusthor.github.io/greenscreenstream/example)
+ [https://coloquium.github.io/greenscreenstream/example/](https://coloquium.github.io/greenscreenstream/example/)
 > See example folder in repo for implementation 
 
 # GreenScreenStream API
