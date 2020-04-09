@@ -111,7 +111,7 @@ void main(){
         });
     }
     /**
-     * Set the color ro be removed
+     * Set the color to be removed
      * i.e (0.05,0.63,0.14)
      * @param {number} r  0.0 - 1.0
      * @param {number} g 0.0 - 1.0

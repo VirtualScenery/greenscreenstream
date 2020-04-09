@@ -58,13 +58,17 @@ Get the most dominant color and a list (palette) of the colors most common in th
 
      getColorsFromStream(): { palette: any, dominant: any } {
 
-### setDominanColor
+### setChromaKey
 
 Pass a mask (rgb), color to the shader , to use as a mask.   Should be the `dominant color`, or on of the `palette` colors detected. See `getColorsFromStream` 
 
 
-        setDominanColor(r: number, g: number, b: number, threshold?: number): void;
- 
+        setChromaKey(r: number, g: number, b: number, threshold?: number): void;
+
+### setRange
+   Range is used to decide the amount of color to be used from either foreground or background.Playing with this variable will decide how much the foreground and background blend together.  
+
+       setMaskRange(x:number,y:number):void
 
 ###  dominant
 
