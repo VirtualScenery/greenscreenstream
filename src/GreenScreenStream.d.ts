@@ -1,5 +1,28 @@
 /// <reference types="webgl2" />
 import { DR } from 'demolishedrenderer';
+export declare type MaskSettings = {
+    opacity: number;
+    flipHorizontal: boolean;
+    maskBlurAmount: number;
+    foregroundColor: {
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+    };
+    backgroundColor: {
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+    };
+    segmentPerson: {
+        flipHorizontal: boolean;
+        internalResolution: string;
+        segmentationThreshold: number;
+        maxDetections: number;
+    };
+};
 export declare class GreenScreenStream {
     useML: boolean;
     canvas: HTMLCanvasElement;
@@ -58,7 +81,7 @@ export declare class GreenScreenStream {
      * @param {*} [config]
      * @memberof GreenScreenStream
      */
-    render(fps?: number, config?: any): void;
+    render(fps?: number, config?: MaskSettings | any): void;
     /**
      * Get a masked image/canvas of -n persons
      *
@@ -66,7 +89,7 @@ export declare class GreenScreenStream {
      * @param {*} [config]
      * @memberof GreenScreenStream
      */
-    getMask(target: HTMLCanvasElement, config?: any): void;
+    getMask(target: HTMLCanvasElement, config?: MaskSettings | any): void;
     /**
      * Add a MediaStreamTrack track (i.e webcam )
      *

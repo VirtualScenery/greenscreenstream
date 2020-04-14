@@ -1,4 +1,4 @@
-import { GreenScreenStream } from "../../src/GreenScreenStream";
+import { GreenScreenStream, MaskSettings } from '../../src/GreenScreenStream';
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
         instance.getMask(document.querySelector("canvas"),
             {
                 backgroundColor: { r: 0, g: 0, b: 0, a: 255 }
-            }
+            } 
         );
     }, (e) => console.error(e));
     // expose to window.

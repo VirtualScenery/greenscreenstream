@@ -3,6 +3,25 @@ import quantize from 'quantize'
 
 const bodyPix = require('@tensorflow-models/body-pix');
 
+export type MaskSettings = {
+    opacity:number,
+    flipHorizontal:boolean,
+    maskBlurAmount:number
+    foregroundColor: {
+        r:number,g:number,b:number,a:number
+    }
+    backgroundColor: {
+        r:number,g:number,b:number,a:number
+    }   
+    segmentPerson: {
+        flipHorizontal:boolean,
+        internalResolution:string
+        segmentationThreshold:number
+        maxDetections: number
+    }
+};
+
+
 export class GreenScreenStream {
 
 
@@ -191,9 +210,13 @@ void main(){
             dominant: this.dominant(imageData, pixels)
         }
     }
-    private maskStream(config?:any,target?:HTMLCanvasElement,cb?: (c: HTMLCanvasElement) => void) {
-        
-        
+
+
+  
+
+
+    private maskStream(config?:MaskSettings | any,target?:HTMLCanvasElement,cb?: (c: HTMLCanvasElement) => void) {
+                
         const opacity = config.opacity || 1.;
         const flipHorizontal = config.flipHorizontal || true;
         const maskBlurAmount = config.maskBlurAmount || 9;
@@ -237,7 +260,7 @@ void main(){
      * @param {*} [config]
      * @memberof GreenScreenStream
      */
-    render(fps?: number,config?:any): void {
+    render(fps?: number,config?:MaskSettings | any): void {
         if(!this.renderer) throw "Now renderer created.Background image must be provided."
         if (this.useML) {
             bodyPix.load({
@@ -254,9 +277,7 @@ void main(){
             });
         } else
             this.cameraSource = this.sourceVideo;
-
-        this.renderer.run(0, fps || 25);
-    }
+        this.renderer.run(0, fps || 25);    }
 
     /**
      * Get a masked image/canvas of -n persons
@@ -265,7 +286,7 @@ void main(){
      * @param {*} [config]
      * @memberof GreenScreenStream
      */
-    getMask(target:HTMLCanvasElement,config?:any,) {
+    getMask(target:HTMLCanvasElement,config?:MaskSettings | any) {
         bodyPix.load({
             architecture: 'MobileNetV1',
             outputStride: 16,

@@ -55,14 +55,21 @@ Adds a `MediaStreamTrack` track (i.e webcam)
 
 Start render the new `MediaStream` 
 
-    render(fps?:  number):  void;
+    render(fps?:  number,config?:MaskSettings):  void;
+
+
+### getMask
+
+Get a masked canvas , renders to to the provided target `canvas`
+
+getMask(target: HTMLCanvasElement, config?: MaskSettings): void;
+
 
 ### captureStream
 
 Capture the rendered result to a MediaStream that you apply to your `<video>` element.
 
-    captureStream(fps?:  number):  MediaStream;
-    
+    captureStream(fps?:  number):  MediaStream;    
 
 ### getColorsFromStream
 
@@ -101,6 +108,36 @@ Get the most dominant color based on imageData and number of pixels
     static  getInstance(backgroudImage:  string,
      canvas?:  HTMLCanvasElement, 
      width?:  number, height?:  number):  GreenScreenStream
+
+## MaskSettings
+
+Applies to render & getMask
+
+    MaskSettings = {
+
+            opacity: number;                // 0.- 1.
+            flipHorizontal: boolean;
+            maskBlurAmount: number;         // 0-20 // Pixels to blur the mask by.
+            foregroundColor: {
+                r: number;
+                g: number;
+                b: number;
+                a: number;
+            };
+            backgroundColor: {
+                r: number;
+                g: number;
+                b: number;
+                a: number;
+            };
+            segmentPerson: {
+                flipHorizontal: boolean;
+                internalResolution: string;      // low, medium, high, full 
+                segmentationThreshold: number;   / 0. -1. 
+                maxDetections: number;
+            };
+            
+    };
 
 
 ## Properties
