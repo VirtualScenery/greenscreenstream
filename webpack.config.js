@@ -4,7 +4,8 @@ module.exports = {
     watch: false,
     entry: {
       webgl: './example/WebGL/Example.js',
-      mlwebgl:'./example/mlWebGL/Example.js'
+      mlwebgl:'./example/mlWebGL/Example.js',
+      mask: './example/Mask/Example.js'
     },
     
     output: {

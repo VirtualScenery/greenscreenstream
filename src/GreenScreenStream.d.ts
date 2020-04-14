@@ -1,16 +1,19 @@
 /// <reference types="webgl2" />
 import { DR } from 'demolishedrenderer';
 export declare class GreenScreenStream {
+    useML: boolean;
     canvas: HTMLCanvasElement;
     ctx: WebGL2RenderingContext;
     renderer: DR;
     mediaStream: MediaStream;
-    video: HTMLVideoElement;
+    private sourceVideo;
+    private cameraSource;
     private chromaKey;
     private maskRange;
     private mainFrag;
     private mainVert;
     private bufferFrag;
+    model: any;
     /**
      *Creates an instance of GreenScreenStream.
      * @param {string} backgroudImage backgound image that replaces the "green"
@@ -19,7 +22,7 @@ export declare class GreenScreenStream {
      * @param {number} [height] height of the HTML5 Canvas element, optional.
      * @memberof GreenScreenStream
      */
-    constructor(backgroudImage: string, canvas?: HTMLCanvasElement, width?: number, height?: number);
+    constructor(useML: boolean, backgroudImage?: string, canvas?: HTMLCanvasElement, width?: number, height?: number);
     /**
      * Set the color to be removed
      * i.e (0.05,0.63,0.14)
@@ -47,13 +50,23 @@ export declare class GreenScreenStream {
         palette: any;
         dominant: any;
     };
+    private maskStream;
     /**
-     * Start render the new media stream
+     * Start renderer
      *
-     * @param {number} [fps] Frames per second
+     * @param {number} [fps]
+     * @param {*} [config]
      * @memberof GreenScreenStream
      */
-    render(fps?: number): void;
+    render(fps?: number, config?: any): void;
+    /**
+     * Get a masked image/canvas of -n persons
+     *
+     * @param {HTMLCanvasElement} target
+     * @param {*} [config]
+     * @memberof GreenScreenStream
+     */
+    getMask(target: HTMLCanvasElement, config?: any): void;
     /**
      * Add a MediaStreamTrack track (i.e webcam )
      *
@@ -64,7 +77,7 @@ export declare class GreenScreenStream {
     /**
      * Capture the rendered result to a MediaStream
      *
-     * @param {number} [fps] Frames per second
+     * @param {number} [fps]
      * @returns {MediaStream}
      * @memberof GreenScreenStream
      */
@@ -79,7 +92,7 @@ export declare class GreenScreenStream {
      * @returns {GreenScreenStream}
      * @memberof GreenScreenStream
      */
-    static getInstance(backgroudImage: string, canvas?: HTMLCanvasElement, width?: number, height?: number): GreenScreenStream;
+    static getInstance(useAI: boolean, backgroudImage?: string, canvas?: HTMLCanvasElement, width?: number, height?: number): GreenScreenStream;
     private pixelArray;
     /**
      *  Get the dominant color from the MediaStreamTrack provided

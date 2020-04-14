@@ -11,11 +11,12 @@ All rendering is made realtime using a WebGL2 pixel shader (glsl) .
 
 1. Add custom post-processor shaders.
 2. Customize "mask" color , right now is plain green-screen's so bit narrow.
-3. Background is now a image texture , but will also be possible to use a provided `<video>` resource.
-4.   
+3. Background is now a image texture , but will also be possible to use a provided 
+`<video>` resource.
+   
 ## install
 
-    npm install greenscreenstream  
+    npm install greenscreenstream@beta  
 
 ## demos
 
@@ -26,6 +27,8 @@ Below you find two different demos,  first link uses machine-learing and require
  [https://coloquium.github.io/greenscreenstream/example/WebGL ](https://coloquium.github.io/greenscreenstream/example/WebGL)
 
 
+ [https://coloquium.github.io/greenscreenstream/example/Mask ](https://coloquium.github.io/greenscreenstream/example/Mask)
+
 
 
 > See `/example/` folder in repo for implementation 
@@ -34,7 +37,7 @@ Below you find two different demos,  first link uses machine-learing and require
 
 ## constructor
 
-     constructor(useML:boolean,backgroudImage:  string,
+     constructor(useML:boolean,backgroudImage?:  string,
       canvas?:  HTMLCanvasElement, width?:
         number, height?:  number);
 
