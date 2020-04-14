@@ -1,9 +1,10 @@
 
 module.exports = {
-    mode:"development", 
+    mode:"production", 
     watch: false,
     entry: {
-      example: './example/App.js'
+      webgl: './example/WebGL/Example.js',
+      mlwebgl:'./example/mlWebGL/Example.js'
     },
     
     output: {

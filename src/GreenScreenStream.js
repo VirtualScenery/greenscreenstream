@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const demolishedrenderer_1 = require("demolishedrenderer");
 const quantize_1 = __importDefault(require("quantize"));
+const bodyPix = require('@tensorflow-models/body-pix');
 class GreenScreenStream {
     /**
      *Creates an instance of GreenScreenStream.
@@ -14,7 +15,8 @@ class GreenScreenStream {
      * @param {number} [height] height of the HTML5 Canvas element, optional.
      * @memberof GreenScreenStream
      */
-    constructor(backgroudImage, canvas, width, height) {
+    constructor(useML, backgroudImage, canvas, width, height) {
+        this.useML = useML;
         this.chromaKey = { r: 0.05, g: 0.63, b: 0.14 };
         this.maskRange = { x: 0.005, y: 0.26 };
         this.mainFrag = `uniform vec2 resolution;
@@ -92,7 +94,7 @@ void main(){
                 num: 33984,
                 fn: (gl, texture) => {
                     gl.bindTexture(gl.TEXTURE_2D, texture);
-                    gl.texImage2D(3553, 0, 6408, 6408, 5121, this.video);
+                    gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -146,13 +148,38 @@ void main(){
         tempCanvas.width = glCanvas.width;
         tempCanvas.height = glCanvas.height;
         let ctx = tempCanvas.getContext("2d");
-        ctx.drawImage(this.video, 0, 0);
+        ctx.drawImage(this.sourceVideo, 0, 0);
         let imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
         const pixels = this.canvas.width * this.canvas.height;
         return {
             palette: this.pallette(imageData, pixels),
             dominant: this.dominant(imageData, pixels)
         };
+    }
+    maskStream(cb, settings) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 800;
+        canvas.height = 450;
+        cb(canvas);
+        const update = () => {
+            let config = settings || {
+                flipHorizontal: true,
+                internalResolution: 'medium',
+                segmentationThreshold: 0.55,
+                maxDetections: 4
+            };
+            this.model.segmentPerson(this.sourceVideo, config).then((segmentation) => {
+                const foregroundColor = { r: 255, g: 255, b: 255, a: 0 };
+                const backgroundColor = { r: 0, g: 177, b: 64, a: 255 };
+                const maskedImage = bodyPix.toMask(segmentation, foregroundColor, backgroundColor);
+                const opacity = 1.;
+                const flipHorizontal = true;
+                const maskBlurAmount = 9;
+                bodyPix.drawMask(canvas, this.sourceVideo, maskedImage, opacity, maskBlurAmount, flipHorizontal);
+                requestAnimationFrame(update);
+            });
+        };
+        update();
     }
     /**
      * Start render the new media stream
@@ -161,6 +188,22 @@ void main(){
      * @memberof GreenScreenStream
      */
     render(fps) {
+        if (this.useML) {
+            bodyPix.load({
+                architecture: 'MobileNetV1',
+                outputStride: 16,
+                multiplier: 0.75,
+                quantBytes: 2
+            }).then((model) => {
+                this.model = model;
+                this.maskStream((canvas) => {
+                    this.cameraSource = canvas;
+                    this.renderer.run(0, fps || 25);
+                });
+            });
+        }
+        else
+            this.cameraSource = this.sourceVideo;
         this.renderer.run(0, fps || 25);
     }
     /**
@@ -171,10 +214,12 @@ void main(){
      */
     addVideoTrack(track) {
         this.mediaStream.addTrack(track);
-        this.video = document.createElement("video");
-        this.video.autoplay = true;
-        this.video.srcObject = this.mediaStream;
-        this.video.play();
+        this.sourceVideo = document.createElement("video");
+        this.sourceVideo.width = 800, this.sourceVideo.height = 450;
+        this.sourceVideo.autoplay = true;
+        this.sourceVideo.srcObject = this.mediaStream;
+        this.sourceVideo.play();
+        this.cameraSource = this.sourceVideo;
     }
     /**
      * Capture the rendered result to a MediaStream
@@ -196,8 +241,8 @@ void main(){
      * @returns {GreenScreenStream}
      * @memberof GreenScreenStream
      */
-    static getInstance(backgroudImage, canvas, width, height) {
-        return new GreenScreenStream(backgroudImage, canvas, width, height);
+    static getInstance(useAI, backgroudImage, canvas, width, height) {
+        return new GreenScreenStream(useAI, backgroudImage, canvas, width, height);
     }
     pixelArray(pixels, pixelCount, quality) {
         const pixelArray = [];

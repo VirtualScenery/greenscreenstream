@@ -1,23 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const GreenScreenStream_1 = require("../src/GreenScreenStream");
+const GreenScreenStream_1 = require("../../src/GreenScreenStream");
 document.addEventListener("DOMContentLoaded", () => {
-    let instance = GreenScreenStream_1.GreenScreenStream.getInstance("assets/costarica.jpg");
+    let instance = GreenScreenStream_1.GreenScreenStream.getInstance(false, "../assets/beach.jpg");
     let customChromaKey = {
         r: 0,
         g: 0,
         b: 0
     };
-    navigator.getUserMedia({ video: true, audio: false }, (m) => {
+    navigator.getUserMedia({ video: { width: 800, height: 450 }, audio: false }, (m) => {
         instance.addVideoTrack(m.getTracks()[0]);
-        instance.render();
-        document.querySelector("video").srcObject = instance.captureStream(25);
         const detectedColor = document.querySelector(".dominates");
         detectedColor.addEventListener("click", () => {
             instance.setChromaKey(customChromaKey.r, customChromaKey.g, customChromaKey.b);
         });
         // detect color 2 / second
-        setInterval(() => {
+        const interrval = setInterval(() => {
             let colors = instance.getColorsFromStream();
             let d = colors.dominant;
             //let p = colors.palette; // not displayed
@@ -27,7 +25,12 @@ document.addEventListener("DOMContentLoaded", () => {
             customChromaKey.g = d[1] / 255;
             customChromaKey.b = d[2] / 255;
         }, 1000 * 2);
+        instance.render();
+        document.querySelector("video").srcObject = instance.captureStream(25);
+        detectedColor.addEventListener("click", () => {
+            instance.setChromaKey(customChromaKey.r, customChromaKey.g, customChromaKey.b);
+        });
     }, (e) => console.error(e));
     // expose to  window.
-    window["greenSttream"] = instance;
+    window["gss"] = instance;
 });

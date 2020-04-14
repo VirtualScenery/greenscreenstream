@@ -1,6 +1,6 @@
 {
   "name": "greenscreenstream",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "description": "Genereate new MediaStreams or Canvas elements based on MediaStreams (webcam ) with any background image. Green screen your webcam!",
   "main": "index.js",
   "scripts": {
@@ -15,10 +15,19 @@
     "webgl2",
     "shaders",
     "glsl",
-    "usermedia"
+    "usermedia",
+    "tensorflow",
+    "machine-learning"
+
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coloquium/greenscreenstream.git"
+  },
   "license": "MIT",
   "dependencies": {
+    "@tensorflow-models/body-pix": "^2.0.5",
+    "@tensorflow/tfjs": "^1.7.2",
     "@types/webgl2": "0.0.5",
     "demolishedrenderer": "^2.1.0-beta.2",
     "quantize": "^1.0.2"
