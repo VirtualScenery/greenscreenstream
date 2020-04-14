@@ -17,15 +17,24 @@ All rendering is made realtime using a WebGL2 pixel shader (glsl) .
 
     npm install greenscreenstream  
 
-## demo
- [https://coloquium.github.io/greenscreenstream/example/](https://coloquium.github.io/greenscreenstream/example/)
-> See example folder in repo for implementation 
+## demos
+
+Below you find two different demos,  first link uses machine-learing and requires no green-screen, but a clean background is to prefer.  Example to uses pure WebGL ( pixel shaders ) and for the best result as green-screen is recomened.  Otherwise as clean background.
+
+ [https://coloquium.github.io/greenscreenstream/example/mlWebGL ](https://coloquium.github.io/greenscreenstream/example/mlWebGL)
+
+ [https://coloquium.github.io/greenscreenstream/example/WebGL ](https://coloquium.github.io/greenscreenstream/example/WebGL)
+
+
+
+
+> See `/example/` folder in repo for implementation 
 
 # GreenScreenStream API
 
 ## constructor
 
-     constructor(backgroudImage:  string,
+     constructor(useML:boolean,backgroudImage:  string,
       canvas?:  HTMLCanvasElement, width?:
         number, height?:  number);
 
