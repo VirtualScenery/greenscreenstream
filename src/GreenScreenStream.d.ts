@@ -29,23 +29,26 @@ export declare class GreenScreenStream {
     ctx: WebGL2RenderingContext;
     renderer: DR;
     mediaStream: MediaStream;
+    model: any;
+    onReady: () => void;
+    private backgroundSource;
     private sourceVideo;
     private cameraSource;
     private chromaKey;
     private maskRange;
-    private mainFrag;
-    private mainVert;
-    private bufferFrag;
-    model: any;
+    mainFrag: string;
+    mainVert: string;
+    bufferVert: string;
+    bufferFrag: string;
     /**
      *Creates an instance of GreenScreenStream.
-     * @param {string} backgroudImage backgound image that replaces the "green"
+     * @param {string} backgroundUrl backgound image that replaces the "green"
      * @param {HTMLCanvasElement} [canvas] HTML5 Canvas element to render to, optional
      * @param {number} [width] width of the HTML5 Canvas element, optional.
      * @param {number} [height] height of the HTML5 Canvas element, optional.
      * @memberof GreenScreenStream
      */
-    constructor(useML: boolean, backgroudImage?: string, canvas?: HTMLCanvasElement, width?: number, height?: number);
+    constructor(useML: boolean, backgroundUrl?: string, canvas?: HTMLCanvasElement, width?: number, height?: number);
     /**
      * Set the color to be removed
      * i.e (0.05,0.63,0.14)

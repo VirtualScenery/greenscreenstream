@@ -25,21 +25,28 @@ export type MaskSettings = {
 export class GreenScreenStream {
 
 
-    canvas: HTMLCanvasElement;
+    canvas: HTMLCanvasElement;;
     ctx: WebGL2RenderingContext;
     renderer: DR;
     mediaStream: MediaStream;
+
+    model: any;
+
+    onReady:() => void
+
+
+    private backgroundSource:  any;
 
     private sourceVideo: HTMLVideoElement;
 
     private cameraSource: HTMLVideoElement | HTMLCanvasElement;
 
-    private chromaKey = { r: 0.05, g: 0.63, b: 0.14 }
+    private chromaKey = { r: 0.0, g: 0.6941176470588235, b: 0.25098039215686274} // { r: 0, g: 177, b: 64
 
-    private maskRange = { x: 0.005, y: 0.26 }
+    private maskRange = { x: 0.0025, y: 0.26 }
 
 
-    private mainFrag: string = `uniform vec2 resolution;
+    mainFrag: string = `uniform vec2 resolution;
     uniform sampler2D A;
     out vec4 fragColor;
     void main(){
@@ -47,14 +54,22 @@ export class GreenScreenStream {
         fragColor = texture(A, uv);
     }`;
 
-    private mainVert: string = `layout(location = 0) in vec2 pos; 
+    mainVert: string = `layout(location = 0) in vec2 pos; 
     out vec4 fragColor;                
     void main() { 
         gl_Position = vec4(pos.xy,0.0,1.0);
     }    
     `;
 
-    private bufferFrag: string = `uniform float time;
+
+    bufferVert: string = `layout(location = 0) in vec2 pos; 
+    out vec4 fragColor;                
+    void main() { 
+        gl_Position = vec4(pos.xy,0.0,1.0);
+    }    
+    `;
+
+    bufferFrag: string = `uniform float time;
     uniform vec2 resolution;   
     uniform sampler2D webcam;
     uniform sampler2D background;
@@ -66,8 +81,6 @@ export class GreenScreenStream {
         0.504, -0.368, -0.291, 0.0,
         0.098, -0.071,  0.439, 0.0,
         0.0625, 0.500,  0.500, 1.0 );
-
-
 
 float colorclose(vec3 yuv, vec3 keyYuv, vec2 tol)
 {
@@ -96,11 +109,11 @@ fragColor = max(fg - mask * chromaKey, 0.0) + bg * mask;
 void main(){    
     mainImage(fragColor,gl_FragCoord.xy);      
 }`;
-    model: any;
+
 
     /**
      *Creates an instance of GreenScreenStream.
-     * @param {string} backgroudImage backgound image that replaces the "green"
+     * @param {string} backgroundUrl backgound image that replaces the "green"
      * @param {HTMLCanvasElement} [canvas] HTML5 Canvas element to render to, optional
      * @param {number} [width] width of the HTML5 Canvas element, optional.
      * @param {number} [height] height of the HTML5 Canvas element, optional.
@@ -108,7 +121,7 @@ void main(){
      */
     constructor(
         public useML: boolean,
-        backgroudImage?: string, canvas?: HTMLCanvasElement, width?: number, height?: number) {
+        backgroundUrl?: string, canvas?: HTMLCanvasElement, width?: number, height?: number) {
         if (canvas) {
             this.canvas = canvas;
         } else {
@@ -121,46 +134,65 @@ void main(){
         this.ctx = this.canvas.getContext("webgl2");
         this.mediaStream = new MediaStream();
 
-        if (backgroudImage) {
+        if (backgroundUrl) {
 
+           
+            this.backgroundSource = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null ? 
+                    new Image() : document.createElement("video");
 
-            this.renderer = new DR(this.canvas, this.mainVert, this.mainFrag);
+            this.backgroundSource.onload = () =>{
 
-            this.renderer.aA(
-                {
-                    "background": {
-                        num: 33985,
-                        src: backgroudImage
-                    },
-                    "webcam": {
-                        num: 33984,
-                        fn: (gl: WebGLRenderingContext, texture: WebGLTexture) => {
-                            gl.bindTexture(gl.TEXTURE_2D, texture);
-                            gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
-                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                        }
-                    }
+                this.renderer = new DR(this.canvas, this.mainVert, this.mainFrag);
 
-                }, () => {
-                    this.renderer.aB("A", this.mainVert, this.bufferFrag, ["webcam", "background"], {
-                        "chromaKey": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
-                            p: WebGLProgram, timestamp: number) => {
-
-                            gl.uniform4f(location, this.chromaKey.r,
-                                this.chromaKey.g, this.chromaKey.b, 1.)
+                this.renderer.aA(
+                    {
+                        "background": {
+                            num: 33985,
+                            src: backgroundUrl
+                            //  fn: (gl: WebGLRenderingContext, texture: WebGLTexture) => {
+                            //     gl.bindTexture(gl.TEXTURE_2D, texture);
+                            //     gl.texImage2D(3553, 0, 6408, 6408, 5121, this.backgroundSource);
+                            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                            // }
                         },
-                        "maskRange": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
-                            p: WebGLProgram, timestamp: number) => {
-
-                            gl.uniform2f(location, this.maskRange.x,
-                                this.maskRange.y)
+                        "webcam": {
+                            num: 33984,
+                            fn: (gl: WebGLRenderingContext, texture: WebGLTexture) => {
+                                gl.bindTexture(gl.TEXTURE_2D, texture);
+                                gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                            }
                         }
+    
+                    }, () => {
+                        this.renderer.aB("A", this.mainVert, this.bufferFrag, ["webcam", "background"], {
+                            "chromaKey": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
+                                p: WebGLProgram, timestamp: number) => {
+    
+                                gl.uniform4f(location, this.chromaKey.r,
+                                    this.chromaKey.g, this.chromaKey.b, 1.)
+                            },
+                            "maskRange": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
+                                p: WebGLProgram, timestamp: number) => {
+    
+                                gl.uniform2f(location, this.maskRange.x,
+                                    this.maskRange.y)
+                            }
+                        });
                     });
-                });
+                    this.onReady();
+
+            }      
+            this.backgroundSource.src = backgroundUrl;      
         }
+      
+
 
     }
     /**
@@ -219,7 +251,7 @@ void main(){
                 
         const opacity = config.opacity || 1.;
         const flipHorizontal = config.flipHorizontal || true;
-        const maskBlurAmount = config.maskBlurAmount || 9;
+        const maskBlurAmount = config.maskBlurAmount || 3;
         const foregroundColor = config.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
         const backgroundColor = config.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
 
@@ -230,8 +262,8 @@ void main(){
         let _config = config.segmentPerson || {
             flipHorizontal: true,
             internalResolution: 'medium',
-            segmentationThreshold: 0.55,
-            maxDetections: 4
+            segmentationThreshold: 0.45,
+            maxDetections: 2
         };
 
         if(cb)
