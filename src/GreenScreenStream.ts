@@ -1,22 +1,30 @@
+
 import { DR } from 'demolishedrenderer';
 import quantize from 'quantize'
 
 const bodyPix = require('@tensorflow-models/body-pix');
 
+
+
+import '@tensorflow/tfjs-backend-webgl';
+
+
+
+
 export type MaskSettings = {
-    opacity:number,
-    flipHorizontal:boolean,
-    maskBlurAmount:number
+    opacity: number,
+    flipHorizontal: boolean,
+    maskBlurAmount: number
     foregroundColor: {
-        r:number,g:number,b:number,a:number
+        r: number, g: number, b: number, a: number
     }
     backgroundColor: {
-        r:number,g:number,b:number,a:number
-    }   
+        r: number, g: number, b: number, a: number
+    }
     segmentPerson: {
-        flipHorizontal:boolean,
-        internalResolution:string
-        segmentationThreshold:number
+        flipHorizontal: boolean,
+        internalResolution: string
+        segmentationThreshold: number
         maxDetections: number
     }
 };
@@ -32,16 +40,16 @@ export class GreenScreenStream {
 
     model: any;
 
-    onReady:() => void
+    onReady: () => void
 
 
-    private backgroundSource:  any;
+    private backgroundSource: any;
 
     private sourceVideo: HTMLVideoElement;
 
     private cameraSource: HTMLVideoElement | HTMLCanvasElement;
 
-    private chromaKey = { r: 0.0, g: 0.6941176470588235, b: 0.25098039215686274} // { r: 0, g: 177, b: 64
+    private chromaKey = { r: 0.0, g: 0.6941176470588235, b: 0.25098039215686274 } // { r: 0, g: 177, b: 64
 
     private maskRange = { x: 0.0025, y: 0.26 }
 
@@ -50,30 +58,28 @@ export class GreenScreenStream {
     uniform sampler2D A;
     out vec4 fragColor;
     void main(){
-        vec2 uv = gl_FragCoord.xy/resolution.xy;        
+        vec2 uv = gl_FragCoord.xy/resolution.xy;
         fragColor = texture(A, uv);
     }`;
 
-    mainVert: string = `layout(location = 0) in vec2 pos; 
-    out vec4 fragColor;                
-    void main() { 
+    mainVert: string = `layout(location = 0) in vec2 pos;
+    out vec4 fragColor;
+    void main() {
         gl_Position = vec4(pos.xy,0.0,1.0);
-    }    
+    }
     `;
-
-
-    bufferVert: string = `layout(location = 0) in vec2 pos; 
-    out vec4 fragColor;                
-    void main() { 
+    bufferVert: string = `layout(location = 0) in vec2 pos;
+    out vec4 fragColor;
+    void main() {
         gl_Position = vec4(pos.xy,0.0,1.0);
-    }    
+    }
     `;
-
+    
     bufferFrag: string = `uniform float time;
-    uniform vec2 resolution;   
+    uniform vec2 resolution;
     uniform sampler2D webcam;
     uniform sampler2D background;
-    uniform vec4 chromaKey; 
+    uniform vec4 chromaKey;
     uniform vec2 maskRange;
     out vec4 fragColor;
 
@@ -94,20 +100,22 @@ return 1.0;
 }
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
-{ 
+{
 vec2 fragPos =  1. - fragCoord.xy / resolution.xy;
-vec4 fg = texture(webcam, fragPos);
-vec4 bg = texture(background, fragPos);
+vec4 fg = texture(background, fragPos);
+vec4 bg = texture(webcam, fragPos);
 
 vec4 keyYUV =  RGBtoYUV * chromaKey;
 vec4 yuv = RGBtoYUV * fg;
 
 float mask = 1.0 - colorclose(yuv.rgb, keyYUV.rgb, maskRange);
-fragColor = max(fg - mask * chromaKey, 0.0) + bg * mask;
-}    
 
-void main(){    
-    mainImage(fragColor,gl_FragCoord.xy);      
+fragColor = max(fg - mask * chromaKey, 0.0) + bg * mask;
+
+}
+
+void main(){
+    mainImage(fragColor,gl_FragCoord.xy);
 }`;
 
 
@@ -126,77 +134,89 @@ void main(){
             this.canvas = canvas;
         } else {
             this.canvas = document.createElement("canvas") as HTMLCanvasElement;
-            this.canvas.width = width || 800; this.canvas.height = height || 450;
+            this.canvas.width = width || 640; this.canvas.height = height || 360;
         }
-
-
-
         this.ctx = this.canvas.getContext("webgl2");
         this.mediaStream = new MediaStream();
 
         if (backgroundUrl) {
-
-           
-            this.backgroundSource = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null ? 
-                    new Image() : document.createElement("video");
-
-            this.backgroundSource.onload = () =>{
-
-                this.renderer = new DR(this.canvas, this.mainVert, this.mainFrag);
-
-                this.renderer.aA(
-                    {
-                        "background": {
-                            num: 33985,
-                            src: backgroundUrl
-                            //  fn: (gl: WebGLRenderingContext, texture: WebGLTexture) => {
-                            //     gl.bindTexture(gl.TEXTURE_2D, texture);
-                            //     gl.texImage2D(3553, 0, 6408, 6408, 5121, this.backgroundSource);
-                            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                            // }
-                        },
-                        "webcam": {
-                            num: 33984,
-                            fn: (gl: WebGLRenderingContext, texture: WebGLTexture) => {
-                                gl.bindTexture(gl.TEXTURE_2D, texture);
-                                gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
-                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                            }
+        
+            this.backgroundSource = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null ?
+                new Image() : document.createElement("video");                
+            const isImage = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null;
+            let textureSettings = {};
+            if (isImage) {
+                textureSettings = {
+                    "background": {
+                        unit: 33985,
+                        src: backgroundUrl
+                    },
+                    "webcam": {
+                        unit: 33986,
+                        fn: (_prg:WebGLProgram,gl: WebGLRenderingContext, texture: WebGLTexture) => {                           
+                            gl.bindTexture(gl.TEXTURE_2D, texture);
+                            gl.texImage2D(gl.TEXTURE_2D, 0, 6408, 6408, 5121, this.cameraSource);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);                           
                         }
-    
-                    }, () => {
+                    }
+
+                }
+            } else {
+                textureSettings = {             
+                    "background": {
+                        unit: 33985,
+                        fn: (_prg:WebGLProgram,gl: WebGLRenderingContext, texture: WebGLTexture) => {
+                            gl.bindTexture(gl.TEXTURE_2D, texture);
+                            gl.texImage2D(3553, 0, 6408, 6408, 5121, this.backgroundSource);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                        }
+                    },
+                    "webcam": {
+                        unit: 33986,
+                        fn: (_prg:WebGLProgram,gl: WebGLRenderingContext, texture: WebGLTexture) => {
+                            gl.bindTexture(gl.TEXTURE_2D, texture);
+                            gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                        }
+                    }
+                }
+                this.backgroundSource.autoplay = true;
+                this.backgroundSource.loop = true;
+            }            
+            this.backgroundSource.addEventListener(isImage ? "load" : "loadeddata", () => {                 
+                this.renderer = new DR(this.canvas, this.mainVert, this.mainFrag);
+                this.renderer.aA(
+                    textureSettings
+                    , () => {
                         this.renderer.aB("A", this.mainVert, this.bufferFrag, ["webcam", "background"], {
                             "chromaKey": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
                                 p: WebGLProgram, timestamp: number) => {
-    
                                 gl.uniform4f(location, this.chromaKey.r,
                                     this.chromaKey.g, this.chromaKey.b, 1.)
                             },
                             "maskRange": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
                                 p: WebGLProgram, timestamp: number) => {
-    
                                 gl.uniform2f(location, this.maskRange.x,
                                     this.maskRange.y)
                             }
                         });
                     });
-                    this.onReady();
-
-            }      
-            this.backgroundSource.src = backgroundUrl;      
+                this.onReady();
+            });
+            this.backgroundSource.src = backgroundUrl;
         }
-      
-
-
     }
     /**
-     * Set the color to be removed 
+     * Set the color to be removed
      * i.e (0.05,0.63,0.14)
      * @param {number} r  0.0 - 1.0
      * @param {number} g 0.0 - 1.0
@@ -244,73 +264,6 @@ void main(){
     }
 
 
-  
-
-
-    private maskStream(config?:MaskSettings | any,target?:HTMLCanvasElement,cb?: (c: HTMLCanvasElement) => void) {
-                
-        const opacity = config.opacity || 1.;
-        const flipHorizontal = config.flipHorizontal || true;
-        const maskBlurAmount = config.maskBlurAmount || 3;
-        const foregroundColor = config.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
-        const backgroundColor = config.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
-
-        const canvas = target || document.createElement("canvas");
-        canvas.width = 800; canvas.height = 450;
-
-
-        let _config = config.segmentPerson || {
-            flipHorizontal: true,
-            internalResolution: 'medium',
-            segmentationThreshold: 0.45,
-            maxDetections: 2
-        };
-
-        if(cb)
-            cb(canvas);
-
-        const update = () => {
-            
-            this.model.segmentPerson(this.sourceVideo, _config
-            ).then((segmentation: any) => {
-                
-                const maskedImage = bodyPix.toMask(segmentation, foregroundColor, backgroundColor);
-
-                bodyPix.drawMask(
-                    canvas, this.sourceVideo, maskedImage, opacity, maskBlurAmount,
-                    flipHorizontal);
-                requestAnimationFrame(update);
-            });
-        }
-        update();
-    }
-   
-    /**
-     * Start renderer 
-     *
-     * @param {number} [fps]
-     * @param {*} [config]
-     * @memberof GreenScreenStream
-     */
-    render(fps?: number,config?:MaskSettings | any): void {
-        if(!this.renderer) throw "Now renderer created.Background image must be provided."
-        if (this.useML) {
-            bodyPix.load({
-                architecture: 'MobileNetV1',
-                outputStride: 16,
-                multiplier: 0.75,
-                quantBytes: 2
-            }).then((model: any) => {
-                this.model = model;
-                this.maskStream(config || {},null,(canvas: HTMLCanvasElement) => {
-                    this.cameraSource = canvas;
-                    this.renderer.run(0, fps || 25);
-                });
-            });
-        } else
-            this.cameraSource = this.sourceVideo;
-        this.renderer.run(0, fps || 25);    }
-
     /**
      * Get a masked image/canvas of -n persons
      *
@@ -318,7 +271,26 @@ void main(){
      * @param {*} [config]
      * @memberof GreenScreenStream
      */
-    getMask(target:HTMLCanvasElement,config?:MaskSettings | any) {
+    getMask(target: HTMLCanvasElement, config?: MaskSettings | any) {
+
+        const foregroundColor = config.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
+        const backgroundColor = config.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
+
+     
+        const canvas = target || document.createElement("canvas");
+        //canvas.width = 256; canvas.height = 144;
+
+        const ctx = canvas.getContext("2d");
+
+
+        let _config = config.segmentPerson || {
+            flipHorizontal: true,
+            internalResolution: 'medium',
+            segmentationThreshold: 0.5,
+            maxDetections: 2
+        };
+
+
         bodyPix.load({
             architecture: 'MobileNetV1',
             outputStride: 16,
@@ -326,38 +298,135 @@ void main(){
             quantBytes: 2
         }).then((model: any) => {
             this.model = model;
-            this.maskStream(config,target,(canvas: HTMLCanvasElement) => {              
-            });
+
+            const update = () => {
+
+                this.model.segmentPerson(this.sourceVideo, _config
+                ).then((segmentation: any) => {
+                    const maskedImage = bodyPix.toMask(segmentation, foregroundColor, backgroundColor);    
+    
+                    ctx.putImageData(maskedImage, 0, 0);
+    
+    
+                    requestAnimationFrame(update);
+                }).catch( e => {
+                    console.log(`Awaiting video to be loaded`);
+                });
+            }
+          
+    
+            console.log("Staring masking");
+    
+            update();
+           
         });
     }
+
+
+    private maskStream(config?: MaskSettings | any, target?: HTMLCanvasElement, cb?: (c: HTMLCanvasElement) => void) {
+
+        const opacity = config.opacity || 1.0;
+        const flipHorizontal = config.flipHorizontal || true;
+        const maskBlurAmount = config.maskBlurAmount || 3;
+        const foregroundColor = config.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
+        const backgroundColor = config.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
+
+     
+        const canvas = target || document.createElement("canvas");
+    
+
+
+        let _config = config.segmentPerson || {
+            flipHorizontal: true,
+            internalResolution: 'medium',
+            segmentationThreshold: 0.5,
+            maxDetections: 2
+        };
+
+        if (cb)
+            cb(canvas);
+
+        const update = () => {
+
+            this.model.segmentPerson(this.sourceVideo, _config
+            ).then((segmentation: any) => {
+                const maskedImage = bodyPix.toMask(segmentation, foregroundColor, backgroundColor);                 
+                bodyPix.drawMask(
+                    canvas, this.sourceVideo, maskedImage, opacity, maskBlurAmount,
+                    flipHorizontal);
+                requestAnimationFrame(update);
+            }).catch( e => {
+                console.log(`Awaiting video to be loaded`);
+            });
+        }
+      
+
+        console.log("Staring masking");
+
+        update();
+    }
+
     /**
-     * Add a MediaStreamTrack track (i.e webcam ) 
+     * Start renderer
      *
-     * @param {MediaStreamTrack} track 
+     * @param {number} [fps]
+     * @param {*} [config]
+     * @memberof GreenScreenStream
+     */
+    render(fps?: number, config?: MaskSettings | any): void {
+        if (!this.renderer) throw "Now renderer created.Background image must be provided."
+        if (this.useML) {
+            bodyPix.load({
+                architecture: 'MobileNetV1',
+                outputStride: 16,
+                multiplier: 1,
+                quantBytes: 2
+            }).then((model: any) => {
+                this.model = model;
+                //this.sourceVideo.onloadeddata = () => {
+                    this.maskStream(config || {}, null, (canvas: HTMLCanvasElement) => {
+                        this.cameraSource = canvas;
+                        this.renderer.run(0, fps || 25);
+                    });
+                //}
+            });
+        } else {
+            this.sourceVideo.onloadeddata = () => {
+                this.renderer.run(0, fps || 25);
+
+            }
+
+        }
+    }
+
+    /**
+     * Add a MediaStreamTrack track (i.e webcam )
+     *
+     * @param {MediaStreamTrack} track
      * @memberof GreenScreenStream
      */
     addVideoTrack(track: MediaStreamTrack): void {
         this.mediaStream.addTrack(track);
         this.sourceVideo = document.createElement("video") as HTMLVideoElement;
-        this.sourceVideo.width = 800, this.sourceVideo.height = 450;
+        this.sourceVideo.width = this.canvas.width, this.sourceVideo.height = this.canvas.height;
         this.sourceVideo.autoplay = true;
         this.sourceVideo.srcObject = this.mediaStream;
         this.sourceVideo.play();
         this.cameraSource = this.sourceVideo;
-    } 
+    }
     /**
      * Capture the rendered result to a MediaStream
-     * 
+     *
      * @param {number} [fps]
      * @returns {MediaStream}
      * @memberof GreenScreenStream
      */
-    captureStream(fps?: number): MediaStream {        
-        return  this.canvas["captureStream"](fps || 25) as MediaStream;
+    captureStream(fps?: number): MediaStream {
+        return this.canvas["captureStream"](fps || 25) as MediaStream;
     }
     /**
-     *  Get an instance instance of GreenScreenStream.  
-     * @static 
+     *  Get an instance instance of GreenScreenStream.
+     * @static
       * @param {string} backgroudImage backgound image that replaces the "green"
      * @param {HTMLCanvasElement} [canvas] HTML5 Canvas element to render to, optional
      * @param {number} [width] width of the HTML5 Canvas element, optional.
