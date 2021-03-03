@@ -18,8 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
         void mainImage( out vec4 fragColor, in vec2 fragCoord )
             {
                 vec2 q = 1. -fragCoord.xy / resolution.xy;                
-                vec3 bg = texture(webcam,q).xyz;
-                vec3 fg = texture(background, q ).xyz;                
+                vec3 bg = texture(background,q).xyz;
+                vec3 fg = texture(webcam, q ).xyz;                
                 vec3 dom = vec3(0,0.6941176470588235,0.25098039215686274);                
                 float maxrb = max( fg.r, fg.b );                
                 float k = clamp( (fg.g-maxrb)*5.0, 0.0, 1.0 );
