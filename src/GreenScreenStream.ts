@@ -197,7 +197,7 @@ void main(){
                 this.renderer.aA(
                     textureSettings
                     , () => {
-                        this.renderer.aB("A", this.mainVert, this.bufferFrag, ["webcam", "background"], {
+                        this.renderer.aB("A", this.mainVert, this.bufferFrag, ["background", "webcam"], {
                             "chromaKey": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
                                 p: WebGLProgram, timestamp: number) => {
                                 gl.uniform4f(location, this.chromaKey.r,
@@ -383,12 +383,12 @@ void main(){
                 quantBytes: 2
             }).then((model: any) => {
                 this.model = model;
-                //this.sourceVideo.onloadeddata = () => {
+             //   this.sourceVideo.onloadeddata = () => {
                     this.maskStream(config || {}, null, (canvas: HTMLCanvasElement) => {
                         this.cameraSource = canvas;
                         this.renderer.run(0, fps || 25);
                     });
-                //}
+               // }
             });
         } else {
             this.sourceVideo.onloadeddata = () => {

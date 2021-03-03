@@ -9,7 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
         instance.addVideoTrack(m.getTracks()[0]);
         instance.getMask(document.querySelector("canvas"),
             {
-                backgroundColor: { r: 0, g: 0, b: 0, a: 255 }
+                backgroundColor: { r: 0, g: 177
+                    , b: 64, a: 127 }
             } 
         );
     }, (e) => console.error(e));
