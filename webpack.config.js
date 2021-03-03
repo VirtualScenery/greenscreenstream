@@ -1,11 +1,13 @@
 
 module.exports = {
-    mode:"production", 
+    mode:"development", 
     watch: false,
     entry: {
       webgl: './example/WebGL/Example.js',
       mlwebgl:'./example/mlWebGL/Example.js',
-      mask: './example/Mask/Example.js'
+      mask: './example/Mask/Example.js',
+      hologram: './example/hologram/Hologram.js'
+
     },
     
     output: {
