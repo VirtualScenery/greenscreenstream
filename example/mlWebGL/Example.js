@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }        
         `;
         instance.onReady = () => {
-            const fps = 25;
+            const fps = 60;
             instance.render(fps);
             // capture the stream en send back to a video element
             const ms = instance.captureStream(fps);
