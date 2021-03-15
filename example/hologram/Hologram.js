@@ -98,7 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
             // Apply the noise as x displacement for every line
             float xpos = uv.x - noise * noise * 0.125;
 
-            vec4 bg = texture(background,uv);
+            // to set a transparent background, use  vec4(0.,1.,0,.0);   
+            vec4 bg = texture(background,uv); 
             fragColor = bg;      
 
             /*

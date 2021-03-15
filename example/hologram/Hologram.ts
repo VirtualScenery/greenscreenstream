@@ -1,11 +1,8 @@
 import { GreenScreenStream } from "../../src/GreenScreenStream";
 
 document.addEventListener("DOMContentLoaded", () => {
- 
-
     navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
         // get an instance of the GreenScreen stream
-        
         let instance = GreenScreenStream.getInstance(true, `../assets/mars.jpg`, undefined, 640, 360);
         
         // override the default shader
@@ -101,7 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
             // Apply the noise as x displacement for every line
             float xpos = uv.x - noise * noise * 0.125;
 
-            vec4 bg = texture(background,uv);
+            // to set a transparent background, use  vec4(0.,1.,0,.0);   
+            vec4 bg = texture(background,uv); 
             fragColor = bg;      
 
             /*

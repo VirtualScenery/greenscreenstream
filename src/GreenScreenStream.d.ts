@@ -1,5 +1,6 @@
-/// <reference types="webgl2" />
 import { DR } from 'demolishedrenderer';
+import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-cpu';
 export declare type MaskSettings = {
     opacity: number;
     flipHorizontal: boolean;
@@ -76,6 +77,14 @@ export declare class GreenScreenStream {
         palette: any;
         dominant: any;
     };
+    /**
+     * Get a masked image/canvas of -n persons
+     *
+     * @param {HTMLCanvasElement} target
+     * @param {*} [config]
+     * @memberof GreenScreenStream
+     */
+    getMask(target: HTMLCanvasElement, config?: MaskSettings | any): void;
     private maskStream;
     /**
      * Start renderer
@@ -85,14 +94,6 @@ export declare class GreenScreenStream {
      * @memberof GreenScreenStream
      */
     render(fps?: number, config?: MaskSettings | any): void;
-    /**
-     * Get a masked image/canvas of -n persons
-     *
-     * @param {HTMLCanvasElement} target
-     * @param {*} [config]
-     * @memberof GreenScreenStream
-     */
-    getMask(target: HTMLCanvasElement, config?: MaskSettings | any): void;
     /**
      * Add a MediaStreamTrack track (i.e webcam )
      *

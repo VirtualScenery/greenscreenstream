@@ -8,6 +8,7 @@ const demolishedrenderer_1 = require("demolishedrenderer");
 const quantize_1 = __importDefault(require("quantize"));
 const bodyPix = require('@tensorflow-models/body-pix');
 require("@tensorflow/tfjs-backend-webgl");
+require("@tensorflow/tfjs-backend-cpu");
 class GreenScreenStream {
     /**
      *Creates an instance of GreenScreenStream.
@@ -93,9 +94,9 @@ void main(){
         this.ctx = this.canvas.getContext("webgl2");
         this.mediaStream = new MediaStream();
         if (backgroundUrl) {
-            this.backgroundSource = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null ?
-                new Image() : document.createElement("video");
             const isImage = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null;
+            this.backgroundSource = isImage ?
+                new Image() : document.createElement("video");
             let textureSettings = {};
             if (isImage) {
                 textureSettings = {
@@ -144,7 +145,7 @@ void main(){
                 this.backgroundSource.autoplay = true;
                 this.backgroundSource.loop = true;
             }
-            this.backgroundSource.addEventListener(isImage ? "load" : "loadeddata", () => {
+            this.backgroundSource.addEventListener(isImage ? "load" : "canplay", () => {
                 this.renderer = new demolishedrenderer_1.DR(this.canvas, this.mainVert, this.mainFrag);
                 this.renderer.aA(textureSettings, () => {
                     this.renderer.aB("A", this.mainVert, this.bufferFrag, ["background", "webcam"], {
@@ -217,7 +218,6 @@ void main(){
         const foregroundColor = config.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
         const backgroundColor = config.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
         const canvas = target || document.createElement("canvas");
-        //canvas.width = 256; canvas.height = 144;
         const ctx = canvas.getContext("2d");
         let _config = config.segmentPerson || {
             flipHorizontal: true,
@@ -237,11 +237,10 @@ void main(){
                     const maskedImage = bodyPix.toMask(segmentation, foregroundColor, backgroundColor);
                     ctx.putImageData(maskedImage, 0, 0);
                     requestAnimationFrame(update);
-                }).catch(e => {
-                    console.log(`Awaiting video to be loaded`);
+                }).catch(err => {
+                    console.error(err);
                 });
             };
-            console.log("Staring masking");
             update();
         });
     }

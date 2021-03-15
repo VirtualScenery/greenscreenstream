@@ -24,14 +24,17 @@ Below you find three different demos,first link uses machine-learing and require
 
 Example two uses pure WebGL (pixel shaders) and for the best result as green-screen is recomened, Otherwise as clean background. Streams to a HTMLVideoElement
 
-Thirs example, creates a "black-screen" , masks out the person(s) and, removes background.  Streams to a HTMLCanvasElement
+Third example, creates a "black-screen" , masks out the person(s) and, removes background.  Streams to a HTMLCanvasElement.
 
+The last example uses cusstom shaders that creates a some kind of "hologram".   
 
  [https://coloquium.github.io/greenscreenstream/example/mlWebGL ](https://coloquium.github.io/greenscreenstream/example/mlWebGL)
 
  [https://coloquium.github.io/greenscreenstream/example/WebGL ](https://coloquium.github.io/greenscreenstream/example/WebGL)
 
  [https://coloquium.github.io/greenscreenstream/example/Mask ](https://coloquium.github.io/greenscreenstream/example/Mask)
+
+ [https://coloquium.github.io/greenscreenstream/example/hologram ](https://coloquium.github.io/greenscreenstream/example/hologram)
 
 
 > See `/example/` folder in repo for implementation 
@@ -44,7 +47,7 @@ Thirs example, creates a "black-screen" , masks out the person(s) and, removes b
       canvas?:  HTMLCanvasElement, width?:
         number, height?:  number);
 
-or use the static method `GreenScreenStream.getIstance(..args`)
+or use the static method `GreenScreenStream.getIstance(..args)`
 
 ## methods
 

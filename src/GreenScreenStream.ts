@@ -3,13 +3,8 @@ import { DR } from 'demolishedrenderer';
 import quantize from 'quantize'
 
 const bodyPix = require('@tensorflow-models/body-pix');
-
-
-
 import '@tensorflow/tfjs-backend-webgl';
-
-
-
+import '@tensorflow/tfjs-backend-cpu'
 
 export type MaskSettings = {
     opacity: number,
@@ -140,10 +135,13 @@ void main(){
         this.mediaStream = new MediaStream();
 
         if (backgroundUrl) {
-        
-            this.backgroundSource = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null ?
-                new Image() : document.createElement("video");                
+
             const isImage = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null;
+        
+            this.backgroundSource = isImage ?
+                new Image() : document.createElement("video");          
+           
+
             let textureSettings = {};
             if (isImage) {
                 textureSettings = {
@@ -192,7 +190,7 @@ void main(){
                 this.backgroundSource.autoplay = true;
                 this.backgroundSource.loop = true;
             }            
-            this.backgroundSource.addEventListener(isImage ? "load" : "loadeddata", () => {                 
+            this.backgroundSource.addEventListener(isImage ? "load" : "canplay", () => {                 
                 this.renderer = new DR(this.canvas, this.mainVert, this.mainFrag);
                 this.renderer.aA(
                     textureSettings
@@ -262,8 +260,6 @@ void main(){
             dominant: this.dominant(imageData, pixels)
         }
     }
-
-
     /**
      * Get a masked image/canvas of -n persons
      *
@@ -275,13 +271,10 @@ void main(){
 
         const foregroundColor = config.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
         const backgroundColor = config.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
-
      
         const canvas = target || document.createElement("canvas");
-        //canvas.width = 256; canvas.height = 144;
-
+       
         const ctx = canvas.getContext("2d");
-
 
         let _config = config.segmentPerson || {
             flipHorizontal: true,
@@ -290,7 +283,6 @@ void main(){
             maxDetections: 2
         };
 
-
         bodyPix.load({
             architecture: 'MobileNetV1',
             outputStride: 16,
@@ -298,25 +290,23 @@ void main(){
             quantBytes: 2
         }).then((model: any) => {
             this.model = model;
-
             const update = () => {
 
                 this.model.segmentPerson(this.sourceVideo, _config
                 ).then((segmentation: any) => {
-                    const maskedImage = bodyPix.toMask(segmentation, foregroundColor, backgroundColor);    
+                    const maskedImage = bodyPix.toMask(segmentation, foregroundColor, backgroundColor);      
     
                     ctx.putImageData(maskedImage, 0, 0);
     
     
                     requestAnimationFrame(update);
-                }).catch( e => {
-                    console.log(`Awaiting video to be loaded`);
+                }).catch( err => {
+                    console.error(err);
                 });
             }
           
     
-            console.log("Staring masking");
-    
+   
             update();
            
         });
