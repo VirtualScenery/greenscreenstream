@@ -1,6 +1,6 @@
 {
   "name": "greenscreenstream",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Genereate new MediaStreams or Canvas elements based on MediaStreams (webcam) with any background image. Green screen your webcam and enable virtual backgrounds in your WebRTC App. ",
   "main": "index.js",
   "scripts": {
@@ -29,6 +29,7 @@
   "dependencies": {
     "@tensorflow-models/body-pix": "^2.1.0",
     "@tensorflow/tfjs": "^3.2.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.2.0",
     "@tensorflow/tfjs-backend-webgl": "^3.2.0",
     "@types/webgl2": "0.0.5",
     "demolishedrenderer": "^2.2.3",
