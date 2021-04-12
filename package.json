@@ -1,6 +1,6 @@
 {
   "name": "greenscreenstream",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Genereate new MediaStreams or Canvas elements based on MediaStreams (webcam) with any background image. Green screen your webcam and enable virtual backgrounds in your WebRTC App. ",
   "main": "index.js",
   "scripts": {

@@ -97,8 +97,8 @@ return 1.0;
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
 vec2 fragPos =  1. - fragCoord.xy / resolution.xy;
-vec4 fg = texture(background, fragPos);
-vec4 bg = texture(webcam, fragPos);
+vec4 fg = texture(webcam, fragPos);
+vec4 bg = texture(background, fragPos);
 
 vec4 keyYUV =  RGBtoYUV * chromaKey;
 vec4 yuv = RGBtoYUV * fg;
@@ -295,9 +295,7 @@ void main(){
                 this.model.segmentPerson(this.sourceVideo, _config
                 ).then((segmentation: any) => {
                     const maskedImage = bodyPix.toMask(segmentation, foregroundColor, backgroundColor);      
-    
-                    ctx.putImageData(maskedImage, 0, 0);
-    
+                    ctx.putImageData(maskedImage, 0, 0);    
     
                     requestAnimationFrame(update);
                 }).catch( err => {
