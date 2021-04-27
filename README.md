@@ -26,7 +26,7 @@ Example two uses pure WebGL (pixel shaders) and for the best result as green-scr
 
 Third example, creates a "black-screen" , masks out the person(s) and, removes background.  Streams to a HTMLCanvasElement.
 
-The last example uses cusstom shaders that creates a some kind of "hologram".   
+The last example uses a custom shader that creates a some kind of "hologram".   
 
  [https://coloquium.github.io/greenscreenstream/example/mlWebGL ](https://coloquium.github.io/greenscreenstream/example/mlWebGL)
 
