@@ -5,8 +5,7 @@ module.exports = {
     entry: {
       webgl: './example/WebGL/Example.js',
       mlwebgl:'./example/mlWebGL/Example.js',
-      mask: './example/Mask/Example.js',
-      hologram: './example/hologram/Hologram.js'
+      hologram: './example/hologram/Hologram.js' 
     },    
     output: {
       path: __dirname + '/example/build',

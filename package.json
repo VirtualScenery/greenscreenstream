@@ -1,7 +1,7 @@
 {
   "name": "greenscreenstream",
-  "version": "1.0.5",
-  "description": "Genereate new MediaStreams or Canvas elements based on MediaStreams (webcam) with any background image. Green screen your webcam and enable virtual backgrounds in your WebRTC App. ",
+  "version": "2.1.0-beta.0",
+  "description": "Genereate new MediaStreams or Canvas elements based on MediaStreams (webcam) with any background image/video. Greenscreen your webcam and enable virtual backgrounds in your web applications. ",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,13 +13,16 @@
     "webrtc",
     "greenscreen",
     "webgl2",
+    "webgl",
+    "canvas",
     "shaders",
     "glsl",
     "usermedia",
     "tensorflow",
     "machine-learning",
     "virtual-backgrounds",
-    "chroma-key"
+    "chroma-key",
+    "hologram"
   ],
   "repository": {
     "type": "git",

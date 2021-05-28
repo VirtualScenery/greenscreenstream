@@ -20,11 +20,9 @@ All rendering is made realtime using a WebGL2 pixel shader (glsl) .
 
 ## demos
 
-Below you find three different demos,first link uses machine-learing and requires no green-screen, but a clean background is to prefer. Streams to a HTMLVideoElement
+Below you find a few different demos,first link uses machine-learing and requires no greenscreen, but a clean background is to prefer. streams to a HTMLVideoElement
 
-Example two uses pure WebGL (pixel shaders) and for the best result as green-screen is recomened, Otherwise as clean background. Streams to a HTMLVideoElement
-
-Third example, creates a "black-screen" , masks out the person(s) and, removes background.  Streams to a HTMLCanvasElement.
+Example two uses pure WebGL (pixel shaders) and for the best result as green-screen is recommended, Otherwise as clean background. Streams to a HTMLVideoElement
 
 The last example uses cusstom shaders that creates a some kind of "hologram".   
 
@@ -32,15 +30,11 @@ The last example uses cusstom shaders that creates a some kind of "hologram".
 
  [https://coloquium.github.io/greenscreenstream/example/WebGL ](https://coloquium.github.io/greenscreenstream/example/WebGL)
 
- [https://coloquium.github.io/greenscreenstream/example/Mask ](https://coloquium.github.io/greenscreenstream/example/Mask)
-
  [https://coloquium.github.io/greenscreenstream/example/hologram ](https://coloquium.github.io/greenscreenstream/example/hologram)
-
 
 > See `/example/` folder in repo for implementation 
 
 # GreenScreenStream API
-
 ## constructor
 
      constructor(useML:boolean,backgroudImage?:  string,

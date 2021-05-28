@@ -1,12 +1,11 @@
-import { GreenScreenStream } from "../../src/GreenScreenStream";
+import { GreenScreenMethod, GreenScreenStream } from "../../src/GreenScreenStream";
 
 document.addEventListener("DOMContentLoaded", () => {
-    navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
-        // get an instance of the GreenScreen stream
-        let instance = GreenScreenStream.getInstance(true, `../assets/mars.jpg`, undefined, 640, 360);
-        
-        // override the default shader
-        instance.bufferFrag = `
+  navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
+    // get an instance of the GreenScreen stream
+    let instance = GreenScreenStream.getInstance(true, `../assets/mars.jpg`, undefined, 640, 360);
+    // override the default shader
+    instance.bufferFrag = `
         uniform float time;
         uniform vec2 resolution;   
         uniform sampler2D webcam;
@@ -138,20 +137,20 @@ document.addEventListener("DOMContentLoaded", () => {
             void main(){    
                 mainImage(fragColor,gl_FragCoord.xy);      
             }        
-        `
+        `;
 
-        instance.onReady = () => {
-            const fps = 25;
-            instance.render(fps);
-            // capture the stream en send back to a video element
-            const ms = instance.captureStream(fps);
-            document.querySelector("video").srcObject = ms;
-        }
-        // add the captured media stream ( video track )
-        instance.addVideoTrack(mediaStream.getTracks()[0]);
-
-     
-
-    }, (e) => console.error(e));
+    instance.onReady = () => {
+      instance.initialize().then(state => {
+        const fps = 60;
+        // Instance.render(fps);
+        // Capture the stream en send back to a video element
+        instance.start(GreenScreenMethod.VirtualBackground);
+        const ms = instance.captureStream(fps);
+        document.querySelector("video").srcObject = ms;
+      });
+    }
+    // add the captured media stream ( video track )
+    instance.addVideoTrack(mediaStream.getVideoTracks()[0]);
+  }, (e) => console.error(e));
 
 });
