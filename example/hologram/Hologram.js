@@ -140,13 +140,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }        
         `;
         instance.onReady = () => {
-            const fps = 25;
-            instance.render(fps);
-            // capture the stream en send back to a video element
-            const ms = instance.captureStream(fps);
-            document.querySelector("video").srcObject = ms;
+            instance.initialize().then(state => {
+                const fps = 60;
+                // Instance.render(fps);
+                // Capture the stream en send back to a video element
+                instance.start(GreenScreenStream_1.GreenScreenMethod.VirtualBackground);
+                const ms = instance.captureStream(fps);
+                document.querySelector("video").srcObject = ms;
+            });
         };
         // add the captured media stream ( video track )
-        instance.addVideoTrack(mediaStream.getTracks()[0]);
+        instance.addVideoTrack(mediaStream.getVideoTracks()[0]);
     }, (e) => console.error(e));
 });
