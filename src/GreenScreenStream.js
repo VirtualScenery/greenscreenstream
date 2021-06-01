@@ -275,7 +275,7 @@ void main(){
         }
     }
     /**
-     * Stop renderer
+     * Stop render
      *
      * @param {boolean} [stopMediaStreams]
      * @memberof GreenScreenStream
@@ -300,6 +300,7 @@ void main(){
      */
     initialize(backgroundUrl, config) {
         const promise = new Promise((initializeCompleted, initializeFailed) => {
+            debugger;
             this.setupRenderer(backgroundUrl).then(r => {
                 if (!config) {
                     this.opacity = 1.0;

@@ -115,8 +115,7 @@ fragColor = max(fg - mask * chromaKey, 0.0) + bg * mask;
 void main(){
     mainImage(fragColor,gl_FragCoord.xy);
 }`;
-
-constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number) {
+    constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number) {
         this.mediaStream = new MediaStream();
 
         if (canvas) {
@@ -329,9 +328,9 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
     }
    
     /**
-     * Stop renderer 
+     * Stop render
      *
-     * @param {boolean} [stopMediaStreams] 
+     * @param {boolean} [stopMediaStreams]
      * @memberof GreenScreenStream
      */
     stop(stopMediaStreams?: boolean) {
@@ -356,6 +355,7 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
      */
     initialize(backgroundUrl?: string, config?: MaskSettings): Promise<boolean> {
         const promise = new Promise<boolean>((initializeCompleted, initializeFailed) => {
+            debugger;
             this.setupRenderer(backgroundUrl).then(r => {
                 if (!config) {
                     this.opacity = 1.0;

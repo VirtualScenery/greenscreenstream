@@ -7,8 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
         let greenscreen = new GreenScreenStream_1.GreenScreenStream(GreenScreenStream_1.GreenScreenMethod.VirtualBackground, undefined, 640, 360);
         greenscreen.addVideoTrack(ms.getVideoTracks()[0]);
         greenscreen.initialize(`../assets/${bgfile}`).then(result => {
+            console.log("initialize completed");
             greenscreen.start();
-            const ms = greenscreen.captureStream(60); // capture result as a MediaSteam and attacj to video element
+            const ms = greenscreen.captureStream(60); // capture result as a MediaSteam and attach to video element
             document.querySelector("video").srcObject = ms;
         }).catch(err => {
             console.log(err);
