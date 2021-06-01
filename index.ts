@@ -1,2 +1,2 @@
 
-export {GreenScreenStream} from './src/GreenScreenStream'
+export {GreenScreenStream,GreenScreenMethod} from './src/GreenScreenStream'

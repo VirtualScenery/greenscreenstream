@@ -2,18 +2,14 @@
 
  ## about
 
-Generate a new MediaStream for `<canvas>` ,`<video>`  elements based on the MediaStreamTracks  and a background image just using JavaScript.  After processed and "green screend" you can capture the stream and use it in your RTCPeerConnections for instance.
-All rendering is made realtime using a WebGL2 pixel shader (glsl) .
+Generate a new MediaStream for `<canvas>` ,`<video>`  elements based on provided MediaStreamTrack and a background image/video just using JavaScript.  
+
+After processed and "green screend" you can capture the stream and use it in your RTCPeerConnections for instance.
+
+all rendering is made realtime using a WebGL2 pixel shader (glsl) and  machine-learing.
 
 *Regards Magnus Thor*
-
-## comming features 
-
-1. Add custom post-processor shaders.
-2. Customize "mask" color , right now is plain green-screen's so bit narrow.
-3. Background is now a image texture , but will also be possible to use a provided 
-`<video>` resource.
-   
+ 
 ## install
 
     npm install greenscreenstream@beta  
@@ -34,36 +30,39 @@ The last example uses cusstom shaders that creates a some kind of "hologram".
 
 > See `/example/` folder in repo for implementation 
 
+
 # GreenScreenStream API
 ## constructor
 
-     constructor(useML:boolean,backgroudImage?:  string,
-      canvas?:  HTMLCanvasElement, width?:
-        number, height?:  number);
+Create an instance of GreenScreenStream
 
-or use the static method `GreenScreenStream.getIstance(..args)`
+
+    constructor(greenScreenMethod: GreenScreenMethod,canvas?: HTMLCanvasElement, width?: number, height?: number)
 
 ## methods
 
+###  initialize
+
+Initlialize the GreenScreenStream with the provided background (image or video) and settings.
+
+    initialize(backgroundUrl?: string, config?: MaskSettings): Promise<boolean> 
 ### addTrack
 
 Adds a `MediaStreamTrack` track (i.e webcam)
 
     addVideoTrack(track:  MediaStreamTrack):  void;
 
-### render
+### start
 
-Start render the new `MediaStream` 
+Start render the greenscreen
 
-    render(fps?:  number,config?:MaskSettings):  void;
+    start():void
 
+### stop():void
 
-### getMask
+Stop render the greenscreen
 
-Get a masked canvas , renders to to the provided target `canvas`
-
-getMask(target: HTMLCanvasElement, config?: MaskSettings): void;
-
+    stop(stopMediaStreams?:boolean):void
 
 ### captureStream
 
@@ -102,16 +101,7 @@ Get the most dominant color based on imageData and number of pixels
 
     pallette(imageData: ImageData, pixelCount: number) {
 
-
-### getInstance
-
-    static  getInstance(backgroudImage:  string,
-     canvas?:  HTMLCanvasElement, 
-     width?:  number, height?:  number):  GreenScreenStream
-
 ## MaskSettings
-
-Applies to render & getMask
 
     MaskSettings = {
 
@@ -139,26 +129,10 @@ Applies to render & getMask
             
     };
 
+## GreenScreenMethod ( enum )
 
-## Properties
-
-### canvas:  HTMLCanvasElement;
-
-Canvas element provided / or created . Contains the rendered result .
-
-### ctx:  WebGL2RenderingContext;
-
-WebGL2 Rendering context
-
-### renderer:  DR;
-DR is the WebGL Rendering engine used, to perform pixel maipulations.
-
-> DR is the demolishedRender , see https://github.com/MagnusThor/demolishedRenderer 
-
-### mediaStream:  MediaStream;
-
-MediaSteam containing the provided VideoTrack
-
-### video:  HTMLVideoElement;
-
-Internal `<video>` element that is passed to the  `renderer:DR` engine.
+    enum GreenScreenMethod {
+     Mask = 0, // get the mask
+     VirtualBackground = 1, // get mask and apply the provided background
+     VirtualBackgroundUsingGreenScreen = 2 // user has a green screen , use shader only.
+    }

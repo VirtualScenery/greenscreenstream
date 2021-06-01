@@ -2,54 +2,68 @@ import { DR } from 'demolishedrenderer';
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 export declare type MaskSettings = {
-    opacity: number;
-    flipHorizontal: boolean;
-    maskBlurAmount: number;
-    foregroundColor: {
+    opacity?: number;
+    flipHorizontal?: boolean;
+    maskBlurAmount?: number;
+    foregroundColor?: {
         r: number;
         g: number;
         b: number;
         a: number;
     };
-    backgroundColor: {
+    backgroundColor?: {
         r: number;
         g: number;
         b: number;
         a: number;
     };
-    segmentPerson: {
-        flipHorizontal: boolean;
-        internalResolution: string;
-        segmentationThreshold: number;
-        maxDetections: number;
+    segmentPerson?: {
+        flipHorizontal?: boolean;
+        internalResolution?: string;
+        segmentationThreshold?: number;
+        maxDetections?: number;
     };
 };
+export declare enum GreenScreenMethod {
+    Mask = 0,
+    VirtualBackground = 1,
+    VirtualBackgroundUsingGreenScreen = 2
+}
 export declare class GreenScreenStream {
-    useML: boolean;
+    greenScreenMethod: GreenScreenMethod;
     canvas: HTMLCanvasElement;
+    isRendering: boolean;
+    rafId: number;
+    opacity: any;
+    flipHorizontal: any;
+    maskBlurAmount: any;
+    foregroundColor: any;
+    backgroundColor: any;
     ctx: WebGL2RenderingContext;
-    renderer: DR;
+    demolished: DR;
     mediaStream: MediaStream;
     model: any;
-    onReady: () => void;
+    private segmentConfig;
     private backgroundSource;
     private sourceVideo;
     private cameraSource;
     private chromaKey;
     private maskRange;
+    private useML;
     mainFrag: string;
     mainVert: string;
     bufferVert: string;
     bufferFrag: string;
+    constructor(greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number);
     /**
-     *Creates an instance of GreenScreenStream.
-     * @param {string} backgroundUrl backgound image that replaces the "green"
-     * @param {HTMLCanvasElement} [canvas] HTML5 Canvas element to render to, optional
-     * @param {number} [width] width of the HTML5 Canvas element, optional.
-     * @param {number} [height] height of the HTML5 Canvas element, optional.
+     * set up the rendering, texture etc.
+     *
+     * @private
+     * @param {string} [backgroundUrl]
+     * @return {*}  {Promise<any>}
      * @memberof GreenScreenStream
      */
-    constructor(useML: boolean, backgroundUrl?: string, canvas?: HTMLCanvasElement, width?: number, height?: number);
+    private setupRenderer;
     /**
      * Set the color to be removed
      * i.e (0.05,0.63,0.14)
@@ -78,22 +92,27 @@ export declare class GreenScreenStream {
         dominant: any;
     };
     /**
-     * Get a masked image/canvas of -n persons
+     * Start render
      *
-     * @param {HTMLCanvasElement} target
-     * @param {*} [config]
      * @memberof GreenScreenStream
      */
-    getMask(target: HTMLCanvasElement, config?: MaskSettings | any): void;
-    private maskStream;
+    start(): void;
     /**
-     * Start renderer
+     * Stop renderer
      *
-     * @param {number} [fps]
-     * @param {*} [config]
+     * @param {boolean} [stopMediaStreams]
      * @memberof GreenScreenStream
      */
-    render(fps?: number, config?: MaskSettings | any): void;
+    stop(stopMediaStreams?: boolean): void;
+    /**
+     * Initalize
+     *
+     * @param {string} [backgroundUrl]
+     * @param {MaskSettings} [config]
+     * @return {*}  {Promise<boolean>}
+     * @memberof GreenScreenStream
+     */
+    initialize(backgroundUrl?: string, config?: MaskSettings): Promise<boolean>;
     /**
      * Add a MediaStreamTrack track (i.e webcam )
      *
@@ -109,20 +128,9 @@ export declare class GreenScreenStream {
      * @memberof GreenScreenStream
      */
     captureStream(fps?: number): MediaStream;
-    /**
-     *  Get an instance instance of GreenScreenStream.
-     * @static
-      * @param {string} backgroudImage backgound image that replaces the "green"
-     * @param {HTMLCanvasElement} [canvas] HTML5 Canvas element to render to, optional
-     * @param {number} [width] width of the HTML5 Canvas element, optional.
-     * @param {number} [height] height of the HTML5 Canvas element, optiona
-     * @returns {GreenScreenStream}
-     * @memberof GreenScreenStream
-     */
-    static getInstance(useAI: boolean, backgroudImage?: string, canvas?: HTMLCanvasElement, width?: number, height?: number): GreenScreenStream;
     private pixelArray;
     /**
-     *  Get the dominant color from the MediaStreamTrack provided
+     *  Get the dominant color from the imageData provided
      *
      * @param {ImageData} imageData
      * @param {number} pixelCount
@@ -131,7 +139,7 @@ export declare class GreenScreenStream {
      */
     dominant(imageData: ImageData, pixelCount: number): any;
     /**
-     * Get a pallette (10) of the most used colors in the MediaStreamTrack provided
+     * Get a pallette (10) of the most used colors in the imageData provided
      *
      * @param {ImageData} imageData
      * @param {number} pixelCount

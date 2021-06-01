@@ -2,10 +2,12 @@ import { GreenScreenMethod, GreenScreenStream } from "../../src/GreenScreenStrea
 
 document.addEventListener("DOMContentLoaded", () => {
   navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
-    // get an instance of the GreenScreen stream
-    let instance = GreenScreenStream.getInstance(true, `../assets/mars.jpg`, undefined, 640, 360);
+    
+    let greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground,undefined, 640, 360);
+   
+    greenscreen.addVideoTrack(mediaStream.getVideoTracks()[0]);
     // override the default shader
-    instance.bufferFrag = `
+    greenscreen.bufferFrag = `
         uniform float time;
         uniform vec2 resolution;   
         uniform sampler2D webcam;
@@ -139,18 +141,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }        
         `;
 
-    instance.onReady = () => {
-      instance.initialize().then(state => {
-        const fps = 60;
-        // Instance.render(fps);
-        // Capture the stream en send back to a video element
-        instance.start(GreenScreenMethod.VirtualBackground);
-        const ms = instance.captureStream(fps);
-        document.querySelector("video").srcObject = ms;
-      });
-    }
-    // add the captured media stream ( video track )
-    instance.addVideoTrack(mediaStream.getVideoTracks()[0]);
+        greenscreen.initialize(`../assets/mars.jpg`).then(state => {
+          const fps = 60;
+          // Instance.render(fps);
+          // Capture the stream en send back to a video element
+          greenscreen.start();
+          const ms = greenscreen.captureStream(fps);
+          document.querySelector("video").srcObject = ms;
+        });
+
+
+    // instance.onReady = () => {
+    
+    // }
+    // // add the captured media stream ( video track )
+ 
   }, (e) => console.error(e));
 
 });
