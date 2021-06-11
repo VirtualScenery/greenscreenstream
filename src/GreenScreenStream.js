@@ -18,6 +18,7 @@ var GreenScreenMethod;
 class GreenScreenStream {
     constructor(greenScreenMethod, canvas, width, height) {
         this.greenScreenMethod = greenScreenMethod;
+        this.canvas = canvas;
         this.chromaKey = { r: 0.0, g: 0.6941176470588235, b: 0.25098039215686274 }; // { r: 0, g: 177, b: 64
         this.maskRange = { x: 0.0025, y: 0.26 };
         this.mainFrag = `uniform vec2 resolution;
@@ -94,7 +95,7 @@ void main(){
             this.useML = true;
     }
     /**
-     * set up the rendering, texture etc.
+     * Set up the rendering, texture etc.
      *
      * @private
      * @param {string} [backgroundUrl]
@@ -102,7 +103,7 @@ void main(){
      * @memberof GreenScreenStream
      */
     setupRenderer(backgroundUrl) {
-        let promise = new Promise((resolve, reject) => {
+        const promise = new Promise((resolve, reject) => {
             try {
                 this.ctx = this.canvas.getContext("webgl2");
                 if (backgroundUrl) {
@@ -168,8 +169,8 @@ void main(){
                                     gl.uniform2f(location, this.maskRange.x, this.maskRange.y);
                                 }
                             });
+                            resolve(true);
                         });
-                        resolve(true);
                     });
                     this.backgroundSource.src = backgroundUrl;
                 }
@@ -295,30 +296,29 @@ void main(){
      *
      * @param {string} [backgroundUrl]
      * @param {MaskSettings} [config]
-     * @return {*}  {Promise<boolean>}
+     * @return {*}  {Promise<GreenScreenStream>}
      * @memberof GreenScreenStream
      */
     initialize(backgroundUrl, config) {
-        const promise = new Promise((initializeCompleted, initializeFailed) => {
-            this.setupRenderer(backgroundUrl).then(r => {
-                if (!config) {
-                    this.opacity = 1.0;
-                    this.flipHorizontal = true;
-                    this.maskBlurAmount = 3;
-                    this.foregroundColor = { r: 255, g: 255, b: 255, a: 0 };
-                    this.backgroundColor = { r: 0, g: 177, b: 64, a: 255 };
-                    this.segmentConfig = {
-                        flipHorizontal: true,
-                        internalResolution: 'medium',
-                        segmentationThreshold: 0.7,
-                        maxDetections: 1,
-                        quantBytes: 2
-                    };
-                }
+        if (!config) {
+            this.opacity = 1.0;
+            this.flipHorizontal = true;
+            this.maskBlurAmount = 3;
+            this.foregroundColor = { r: 255, g: 255, b: 255, a: 0 };
+            this.backgroundColor = { r: 0, g: 177, b: 64, a: 255 };
+            this.segmentConfig = {
+                flipHorizontal: true,
+                internalResolution: 'medium',
+                segmentationThreshold: 0.7,
+                maxDetections: 1,
+                quantBytes: 2
+            };
+        }
+        return new Promise((complted, rejected) => {
+            this.setupRenderer(backgroundUrl).then(setupResult => {
                 const p = new Promise((resolve, reject) => {
                     if (!this.demolished)
                         reject(`Now renderer created.Background image must be provided.`);
-                    console.info(`GreenScreenStream using:${this.useML}`);
                     if (this.useML) {
                         bodyPix.load({
                             architecture: 'MobileNetV1',
@@ -328,25 +328,20 @@ void main(){
                         }).then((model) => {
                             this.model = model;
                             resolve(true);
-                        }).catch(err => {
+                        }).catch((err) => {
                             reject(err);
                         });
                     }
                     else {
-                        this.sourceVideo.onloadeddata = () => {
-                            resolve(true);
-                        };
+                        // this.sourceVideo.onloadeddata = () => {  todo:  Refacor, 
+                        resolve(true);
+                        //}
                     }
-                });
-                p.then(r => {
-                    initializeCompleted(true);
-                }).catch(err => {
-                    console.error(err);
-                    initializeFailed(err);
-                });
+                }).then(a => {
+                    complted(this);
+                }).catch(e => { rejected(e); });
             });
         });
-        return promise;
     }
     /**
      * Add a MediaStreamTrack track (i.e webcam )

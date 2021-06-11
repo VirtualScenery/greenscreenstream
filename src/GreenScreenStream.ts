@@ -6,6 +6,7 @@ const bodyPix = require('@tensorflow-models/body-pix');
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
 
+
 export type MaskSettings = {
     opacity?: number,
     flipHorizontal?: boolean,
@@ -32,7 +33,6 @@ export enum GreenScreenMethod {
 
 
 export class GreenScreenStream {
-    canvas: HTMLCanvasElement;
     isRendering: boolean;
     rafId: number;
     opacity: any;
@@ -116,7 +116,7 @@ void main(){
     mainImage(fragColor,gl_FragCoord.xy);
 }`;
 
-constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number) {
+    constructor(public greenScreenMethod: GreenScreenMethod, public canvas?: HTMLCanvasElement, width?: number, height?: number) {
         this.mediaStream = new MediaStream();
 
         if (canvas) {
@@ -131,7 +131,7 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
     }
 
     /**
-     * set up the rendering, texture etc.
+     * Set up the rendering, texture etc.
      *
      * @private
      * @param {string} [backgroundUrl]
@@ -139,7 +139,7 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
      * @memberof GreenScreenStream
      */
     private setupRenderer(backgroundUrl?: string): Promise<any> {
-        let promise = new Promise<any>((resolve, reject) => {
+        const promise = new Promise<any>((resolve, reject) => {
             try {
                 this.ctx = this.canvas.getContext("webgl2");
                 if (backgroundUrl) {
@@ -212,8 +212,8 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
                                             this.maskRange.y)
                                     }
                                 });
+                                resolve(true);
                             });
-                        resolve(true);
 
                     });
                     this.backgroundSource.src = backgroundUrl;
@@ -223,9 +223,7 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
             }
 
         });
-
         return promise;
-
     }
     /**
      * Set the color to be removed
@@ -293,6 +291,8 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
             if (this.greenScreenMethod === GreenScreenMethod.VirtualBackground) {
                 let canvas = document.createElement("canvas");
                 this.cameraSource = canvas;
+
+                
                 const update = (t: number) => {
                     if (!this.isRendering) return;
                     this.model.segmentPerson(this.sourceVideo, this.segmentConfig
@@ -327,7 +327,7 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
         }
 
     }
-   
+
     /**
      * Stop renderer 
      *
@@ -351,30 +351,30 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
      *
      * @param {string} [backgroundUrl]
      * @param {MaskSettings} [config]
-     * @return {*}  {Promise<boolean>}
+     * @return {*}  {Promise<GreenScreenStream>}
      * @memberof GreenScreenStream
      */
-    initialize(backgroundUrl?: string, config?: MaskSettings): Promise<boolean> {
-        const promise = new Promise<boolean>((initializeCompleted, initializeFailed) => {
-            this.setupRenderer(backgroundUrl).then(r => {
-                if (!config) {
-                    this.opacity = 1.0;
-                    this.flipHorizontal = true;
-                    this.maskBlurAmount = 3;
-                    this.foregroundColor = { r: 255, g: 255, b: 255, a: 0 };
-                    this.backgroundColor = { r: 0, g: 177, b: 64, a: 255 };
-                    this.segmentConfig = {
-                        flipHorizontal: true,
-                        internalResolution: 'medium',
-                        segmentationThreshold: 0.7,
-                        maxDetections: 1,
-                        quantBytes: 2
-                    };
-                }
+    initialize(backgroundUrl?: string, config?: MaskSettings): Promise<GreenScreenStream> {
 
+        if (!config) {
+            this.opacity = 1.0;
+            this.flipHorizontal = true
+            this.maskBlurAmount = 3;
+            this.foregroundColor = { r: 255, g: 255, b: 255, a: 0 };
+            this.backgroundColor = { r: 0, g: 177, b: 64, a: 255 };
+            this.segmentConfig = {
+                flipHorizontal: true,
+                internalResolution: 'medium',
+                segmentationThreshold: 0.7,
+                maxDetections: 1,
+                quantBytes: 2
+            };
+        }
+
+        return new Promise<GreenScreenStream>((complted, rejected) => {
+            this.setupRenderer(backgroundUrl).then(setupResult => {
                 const p = new Promise<boolean>((resolve, reject) => {
                     if (!this.demolished) reject(`Now renderer created.Background image must be provided.`);
-                    console.info(`GreenScreenStream using:${this.useML}`);
                     if (this.useML) {
                         bodyPix.load({
                             architecture: 'MobileNetV1',
@@ -384,33 +384,19 @@ constructor(public greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElem
                         }).then((model: any) => {
                             this.model = model;
                             resolve(true);
-                        }).catch(err => {
+                        }).catch((err: any) => {
                             reject(err);
                         });
                     } else {
-                        this.sourceVideo.onloadeddata = () => {
-                            resolve(true);
-                        }
+                        // this.sourceVideo.onloadeddata = () => {  todo:  Refacor, 
+                        resolve(true);
+                        //}
                     }
-                });
-
-                p.then(r => {
-                    initializeCompleted(true);
-                }).catch(err => {
-                    console.error(err);
-                    initializeFailed(err);
-                })
-
+                }).then(a => {
+                    complted(this);
+                }).catch(e => { rejected(e) });
             });
-
-
         });
-
-
-
-        return promise;
-
-
 
     }
     /**

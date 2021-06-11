@@ -31,7 +31,7 @@ export declare enum GreenScreenMethod {
 }
 export declare class GreenScreenStream {
     greenScreenMethod: GreenScreenMethod;
-    canvas: HTMLCanvasElement;
+    canvas?: HTMLCanvasElement;
     isRendering: boolean;
     rafId: number;
     opacity: any;
@@ -56,7 +56,7 @@ export declare class GreenScreenStream {
     bufferFrag: string;
     constructor(greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number);
     /**
-     * set up the rendering, texture etc.
+     * Set up the rendering, texture etc.
      *
      * @private
      * @param {string} [backgroundUrl]
@@ -109,10 +109,10 @@ export declare class GreenScreenStream {
      *
      * @param {string} [backgroundUrl]
      * @param {MaskSettings} [config]
-     * @return {*}  {Promise<boolean>}
+     * @return {*}  {Promise<GreenScreenStream>}
      * @memberof GreenScreenStream
      */
-    initialize(backgroundUrl?: string, config?: MaskSettings): Promise<boolean>;
+    initialize(backgroundUrl?: string, config?: MaskSettings): Promise<GreenScreenStream>;
     /**
      * Add a MediaStreamTrack track (i.e webcam )
      *

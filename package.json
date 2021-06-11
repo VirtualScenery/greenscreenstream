@@ -1,6 +1,6 @@
 {
   "name": "greenscreenstream",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Genereate new MediaStreams or Canvas elements based on MediaStreams (webcam) with any background image/video. Greenscreen your webcam and enable virtual backgrounds in your web applications. ",
   "main": "index.js",
   "scripts": {
@@ -37,5 +37,8 @@
     "@types/webgl2": "0.0.5",
     "demolishedrenderer": "^2.2.3",
     "quantize": "^1.0.2"
+  },
+  "devDependencies": {
+    "raw-loader": "^4.0.2"
   }
 }

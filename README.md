@@ -20,13 +20,17 @@ Below you find a few different demos,first link uses machine-learing and require
 
 Example two uses pure WebGL (pixel shaders) and for the best result as green-screen is recommended, Otherwise as clean background. Streams to a HTMLVideoElement
 
-The last example uses a custom shader that creates a some kind of "hologram".   
+The last two examples uses a custom shaders.   
 
  [https://coloquium.github.io/greenscreenstream/example/mlWebGL ](https://coloquium.github.io/greenscreenstream/example/mlWebGL)
 
  [https://coloquium.github.io/greenscreenstream/example/WebGL ](https://coloquium.github.io/greenscreenstream/example/WebGL)
 
  [https://coloquium.github.io/greenscreenstream/example/hologram ](https://coloquium.github.io/greenscreenstream/example/hologram)
+
+ [https://coloquium.github.io/greenscreenstream/example/procedual ](https://coloquium.github.io/greenscreenstream/example/procedual)
+
+
 
 > See `/example/` folder in repo for implementation 
 
@@ -46,7 +50,7 @@ Create an instance of GreenScreenStream
 Initlialize the GreenScreenStream with the provided background (image or video) and settings.
 
     initialize(backgroundUrl?: string, config?: MaskSettings): Promise<boolean> 
-### addTrack
+### addVideoTrack
 
 Adds a `MediaStreamTrack` track (i.e webcam)
 
