@@ -152,3 +152,4 @@ document.addEventListener("DOMContentLoaded", () => {
         // // add the captured media stream ( video track )
     }, (e) => console.error(e));
 });
+//# sourceMappingURL=Hologram.js.map

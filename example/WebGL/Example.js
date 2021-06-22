@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const GreenScreenStream_1 = require("../../src/GreenScreenStream");
 document.addEventListener("DOMContentLoaded", () => {
-    //let instance = GreenScreenStream.getInstance(false, "../assets/beach.jpg");
     let customChromaKey = {
         r: 0,
         g: 0,
@@ -32,7 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
             detectedColor.addEventListener("click", () => {
                 instance.setChromaKey(customChromaKey.r, customChromaKey.g, customChromaKey.b);
             });
+        }).catch(e => {
+            instance.stop();
+            console.error(e);
         });
     }, (e) => console.error(e));
     window["_instance"] = instance;
 });
+//# sourceMappingURL=Example.js.map

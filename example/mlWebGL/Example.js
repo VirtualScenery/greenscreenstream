@@ -39,3 +39,4 @@ document.addEventListener("DOMContentLoaded", () => {
         window["_instance"] = greenscreen; // expose for debuging purposes
     }, (e) => console.error(e));
 });
+//# sourceMappingURL=Example.js.map

@@ -14,26 +14,23 @@ all rendering is made realtime using a WebGL2 pixel shader (glsl) and  machine-l
 
     npm install greenscreenstream@beta  
 
-## demos
+## examples
 
-Below you find a few different demos,first link uses machine-learing and requires no greenscreen, but a clean background is to prefer. streams to a HTMLVideoElement
+Below you find a few different examples of greenscreenstream.
 
-Example two uses pure WebGL (pixel shaders) and for the best result as green-screen is recommended, Otherwise as clean background. Streams to a HTMLVideoElement
-
-The last two examples uses a custom shaders.   
 
  [https://coloquium.github.io/greenscreenstream/example/mlWebGL ](https://coloquium.github.io/greenscreenstream/example/mlWebGL)
 
- [https://coloquium.github.io/greenscreenstream/example/WebGL ](https://coloquium.github.io/greenscreenstream/example/WebGL)
-
+ [https://coloquium.github.io/greenscreenstream/example/WebGL#snow.mp4 ](https://coloquium.github.io/greenscreenstream/example/WebGL#snow.mp4)
+ 
  [https://coloquium.github.io/greenscreenstream/example/hologram ](https://coloquium.github.io/greenscreenstream/example/hologram)
 
  [https://coloquium.github.io/greenscreenstream/example/procedual ](https://coloquium.github.io/greenscreenstream/example/procedual)
 
+ [https://coloquium.github.io/greenscreenstream/example/WebGL ](https://coloquium.github.io/greenscreenstream/example/WebGL)
 
 
-> See `/example/` folder in repo for implementation 
-
+> See `/example/` folder in repo for implementation. 
 
 # GreenScreenStream API
 ## constructor

@@ -1,8 +1,7 @@
 import { GreenScreenMethod, GreenScreenStream } from "../../src/GreenScreenStream";
 
 document.addEventListener("DOMContentLoaded", () => {
-    //let instance = GreenScreenStream.getInstance(false, "../assets/beach.jpg");
-
+   
     let customChromaKey = {
         r: 0,
         g: 0,
@@ -44,6 +43,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 instance.setChromaKey(customChromaKey.r, customChromaKey.g, customChromaKey.b);
             });
 
+        }).catch ( e => {
+            instance.stop();
+            console.error(e);
         });
 
 
