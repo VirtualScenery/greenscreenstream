@@ -4,7 +4,7 @@
 
 Generate a new MediaStream for `<canvas>` ,`<video>`  elements based on provided MediaStreamTrack and a background image/video just using JavaScript.  
 
-After processed and "green screend" you can capture the stream and use it in your RTCPeerConnections for instance.
+After processed and "green screened" you can capture the stream and use it in your RTCPeerConnections for instance.
 
 all rendering is made realtime using a WebGL2 pixel shader (glsl) and  machine-learing.
 
@@ -12,7 +12,7 @@ all rendering is made realtime using a WebGL2 pixel shader (glsl) and  machine-l
  
 ## install
 
-    npm install greenscreenstream@beta  
+    npm install greenscreenstream  
 
 ## examples
 
