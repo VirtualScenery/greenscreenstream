@@ -12,6 +12,7 @@ export type MaskSettings = {
         flipHorizontal?: boolean,
         internalResolution?: string
         segmentationThreshold?: number
-        maxDetections?: number
+        maxDetections?: number,
+        quantBytes?: number
     }
 };

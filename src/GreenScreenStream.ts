@@ -6,25 +6,18 @@ const bodyPix = require('@tensorflow-models/body-pix');
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
 
+import { GreenScreenConfig } from './models/green-screen-config.type';
 import bufferFragmentShader from "./glsl/buffer-frag.glsl";
 import bufferVertexShader from "./glsl/buffer-vert.glsl";
 import mainVertexShader from './glsl/main-vert.glsl';
 import mainFragmentShader from './glsl/main-frag.glsl';
-import { MaskSettings } from './masksettings.type';
-import {
-    getImageTextureSettings,
-    getVideoTextureSettings,
-    ImageTextureSettings,
-    VideoTextureSettings
-} from './texturesettings';
-import { asyncCall } from './async-call.util';
-import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './glsl-constants';
-
-export enum GreenScreenMethod {
-    Mask = 0,
-    VirtualBackground = 1,
-    VirtualBackgroundUsingGreenScreen = 2
-}
+import { MaskSettings } from './models/masksettings.type';
+import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
+import { ImageTextureSettings, VideoTextureSettings } from './models/texturesettings.type';
+import { GreenScreenMethod } from './models/green-screen-method.enum';
+import { BodyPixConfig } from './models/bodypix-config.interface';
+import { getBodyPixMode } from './utils/get-bodypix-mode.util';
+import { asyncCall } from './utils/async-call.util';
 
 export class GreenScreenStream {
     isRendering: boolean;
@@ -57,16 +50,16 @@ export class GreenScreenStream {
     constructor(public greenScreenMethod: GreenScreenMethod, public canvas?: HTMLCanvasElement, width: number = 640, height: number = 360) {
         this.mediaStream = new MediaStream();
 
-        if (canvas) 
+        if (canvas)
             this.canvas = canvas;
 
         else {
             this.canvas = document.createElement("canvas") as HTMLCanvasElement;
-            this.canvas.width = width; 
+            this.canvas.width = width;
             this.canvas.height = height;
         }
 
-        if (greenScreenMethod !== GreenScreenMethod.VirtualBackgroundUsingGreenScreen) 
+        if (greenScreenMethod !== GreenScreenMethod.VirtualBackgroundUsingGreenScreen)
             this.useML = true;
     }
 
@@ -82,31 +75,33 @@ export class GreenScreenStream {
 
         return new Promise<boolean | Error>(async (resolve, reject) => {
             try {
-                this.ctx = this.canvas.getContext("webgl2");
-                let textureSettings: ImageTextureSettings | VideoTextureSettings;
-
                 // What should happen in this instance? Throw an error? Promise would never get resolved or rejected in previous implementation
                 if (!backgroundUrl)
                     resolve(false);
+
+                let textureSettings: ImageTextureSettings | VideoTextureSettings;
+                this.ctx = this.canvas.getContext("webgl2");
 
                 const isImage = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null;
                 this.backgroundSource = isImage ? new Image() : document.createElement("video");
 
                 if (isImage)
-                    textureSettings = getImageTextureSettings(backgroundUrl, this.cameraSource);
+                    textureSettings = this.getImageTextureSettings(backgroundUrl);
 
                 else {
-                    textureSettings = getVideoTextureSettings(this.backgroundSource, this.cameraSource);
+                    textureSettings = this.getVideoTextureSettings();
 
                     this.backgroundSource.autoplay = true;
                     this.backgroundSource.loop = true;
                 }
 
+                this.onSourceLoaded(isImage).then( async () => {
+                    console.log('loaded source')
+                    await this.prepareRenderer(textureSettings);
+                    resolve(true);
+                });             
                 this.backgroundSource.src = backgroundUrl;
-                await this.onSourceLoaded(isImage);
-                await this.prepareRenderer(textureSettings);
-
-                resolve(true);
+                console.log('setting source')
 
             } catch (error) {
                 reject(error)
@@ -114,6 +109,61 @@ export class GreenScreenStream {
         });
     }
 
+    /**
+     * Get the texturesettings needed for an image background
+     * @param backgroundUrl 
+     */
+    private getImageTextureSettings(backgroundUrl: string): ImageTextureSettings {
+        return {
+            "background": {
+                unit: 33985,
+                src: backgroundUrl
+            },
+            "webcam": {
+                unit: 33986,
+                fn: (_prg: WebGLProgram, gl: WebGLRenderingContext, texture: WebGLTexture) => {
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, 6408, 6408, 5121, this.cameraSource);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                }
+            }
+
+        }
+    }
+
+    /**
+     * Get the texturesettings needed for a video background
+     */
+    private getVideoTextureSettings(): VideoTextureSettings {
+        return {
+            "background": {
+                unit: 33985,
+                fn: (_prg: WebGLProgram, gl: WebGLRenderingContext, texture: WebGLTexture) => {
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(3553, 0, 6408, 6408, 5121, this.backgroundSource);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                }
+            },
+            "webcam": {
+                unit: 33986,
+                fn: (_prg: WebGLProgram, gl: WebGLRenderingContext, texture: WebGLTexture) => {
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                }
+            }
+        }
+    }
+ 
     /**
      * Adds a event listener to the background source that determines if it's loaded.
      * @param isImage determines if the current background source is an image or a video.
@@ -130,7 +180,7 @@ export class GreenScreenStream {
     /**
      * Instantiates & prepares the demolishedRenderer 
      * @param textureSettings
-     * @returns 
+     * @todo clean this up somehow
      */
     private prepareRenderer(textureSettings: ImageTextureSettings | VideoTextureSettings): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -138,18 +188,40 @@ export class GreenScreenStream {
             this.demolished.aA(
                 textureSettings
                 , () => {
-                    this.demolished.aB("A", this.mainVert, this.bufferFrag, ["background", "webcam"], {
-                        "chromaKey": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
-                            p: WebGLProgram, timestamp: number) => {
-                            gl.uniform4f(location, this.chromaKey.r,
-                                this.chromaKey.g, this.chromaKey.b, 1.)
-                        },
-                        "maskRange": (location: WebGLUniformLocation, gl: WebGLRenderingContext,
-                            p: WebGLProgram, timestamp: number) => {
-                            gl.uniform2f(location, this.maskRange.x,
-                                this.maskRange.y)
+                    this.demolished.aB(
+                        "A",
+                        this.mainVert,
+                        this.bufferFrag,
+                        ["background", "webcam"],
+                        {
+                            "chromaKey": (
+                                location: WebGLUniformLocation,
+                                gl: WebGLRenderingContext,
+                                p: WebGLProgram,
+                                timestamp: number
+                            ) => {
+                                gl.uniform4f(
+                                    location,
+                                    this.chromaKey.r,
+                                    this.chromaKey.g,
+                                    this.chromaKey.b, 
+                                    1.
+                                )
+                            },
+                            "maskRange": (
+                                location: WebGLUniformLocation,
+                                gl: WebGLRenderingContext,
+                                p: WebGLProgram,
+                                timestamp: number
+                            ) => {
+                                gl.uniform2f(
+                                    location,
+                                    this.maskRange.x,
+                                    this.maskRange.y
+                                )
+                            }
                         }
-                    });
+                    );
                     resolve();
                 });
         });
@@ -168,6 +240,7 @@ export class GreenScreenStream {
         this.chromaKey.g = g;
         this.chromaKey.b = b;
     }
+
     /**
      * Range is used to decide the amount of color to be used from either foreground or background.
      * Playing with this variable will decide how much the foreground and background blend together.
@@ -179,6 +252,7 @@ export class GreenScreenStream {
         this.maskRange.x = x;
         this.maskRange.y = y;
     }
+
     /**
      * Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack
      *
@@ -202,6 +276,7 @@ export class GreenScreenStream {
             dominant: this.dominant(imageData, pixels)
         }
     }
+
     /**
      * Start render
      *
@@ -287,81 +362,89 @@ export class GreenScreenStream {
 
     /**
      * Stop renderer 
-     *
      * @param {boolean} [stopMediaStreams] 
      * @memberof GreenScreenStream
      */
-    stop(stopMediaStreams?: boolean) {
+    stop(stopMediaStreams?: boolean): void {
         this.isRendering = false;
         cancelAnimationFrame(this.rafId);
         this.rafId = - 1;
         if (stopMediaStreams) {
-            this.mediaStream.getVideoTracks().forEach(t => {
-                t.stop();
+            this.mediaStream.getVideoTracks().forEach(track => {
+                track.stop();
             });
         }
     }
 
     /**
-     * Initalize
-     *
+     * Initalize 
      * @param {string} [backgroundUrl]
      * @param {MaskSettings} [config]
      * @return {*}  {Promise<GreenScreenStream>}
      * @memberof GreenScreenStream
      */
-    initialize(backgroundUrl?: string, config?: MaskSettings): Promise<GreenScreenStream> {
+    initialize(backgroundUrl?: string, config?: GreenScreenConfig): Promise<GreenScreenStream> {
 
-        if (!config) 
-            this.setBaseConfig();
+        this.setConfig(config?.maskSettings);
 
-        return new Promise<GreenScreenStream>( async (complted, rejected) => {
+        return new Promise<GreenScreenStream>(async (resolve, reject) => {
 
-            let { error, result } = await asyncCall(this.setupRenderer(backgroundUrl));
+            let result = await asyncCall(this.setupRenderer(backgroundUrl));
+            if (result.error)
+                reject(result.error);
 
-            if(error)
-                rejected(error);
+            if (!this.demolished)
+                reject(`No renderer created. Background source must be provided.`);
 
-            if (!this.demolished) 
-                rejected(`No renderer created.Background image must be provided.`);
-            
-            if(!this.useML)
-                complted(this);
+            if (!this.useML)
+                resolve(this);
 
-            ({ error, result } = await asyncCall(
-                bodyPix.load({
-                    architecture: 'MobileNetV1',
-                    outputStride: 16,
-                    multiplier: 1,
-                    quantBytes: 2
-                })
-            ));
+            const model = await asyncCall(this.setupBodyPixModel(config));
+            if (model.error)
+                reject(model.error);
 
-            if(error)
-                rejected(error);
-            
-            this.model = result;
-            complted(this);
+            console.log(model.result);
+            this.model = model.result;
+            resolve(this);
         });
     }
 
     /**
-     * Sets up a standard config when no config is provided on initialization
+     * Applies the passed config or sets up a standard config when no config is provided on initialization
      */
-    private setBaseConfig(): void {
-        this.opacity = 1.0;
-        this.flipHorizontal = true
-        this.maskBlurAmount = 3;
-        this.foregroundColor = { r: 255, g: 255, b: 255, a: 0 };
-        this.backgroundColor = { r: 0, g: 177, b: 64, a: 255 };
+    private setConfig(config?: MaskSettings): void {
+        this.opacity = config?.opacity || 1.0;
+        this.flipHorizontal = config?.flipHorizontal || true
+        this.maskBlurAmount = config?.maskBlurAmount || 3;
+        this.foregroundColor = config?.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
+        this.backgroundColor = config?.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
+
         this.segmentConfig = {
-            flipHorizontal: true,
-            internalResolution: 'medium',
-            segmentationThreshold: 0.7,
-            maxDetections: 1,
-            quantBytes: 2
+            flipHorizontal: config?.segmentPerson.flipHorizontal || true,
+            internalResolution: config?.segmentPerson.internalResolution || 'medium',
+            segmentationThreshold: config?.segmentPerson.segmentationThreshold || 0.7,
+            maxDetections: config?.segmentPerson.maxDetections || 1,
+            quantBytes: config?.segmentPerson.quantBytes || 2
         };
+        console.log(this.segmentConfig)
     }
+
+    /**
+     * Sets up the bodypix model either via custom config or a preset.
+     * If neither is provided, a default config is used.
+     * @param config 
+     */
+    private async setupBodyPixModel(config: GreenScreenConfig) {
+        let bodyPixMode: BodyPixConfig;
+
+        if (config?.bodyPixConfig)
+            bodyPixMode = config?.bodyPixConfig;
+        else
+            bodyPixMode = getBodyPixMode(config?.bodyPixMode);
+
+        return bodyPix.load(bodyPixMode);
+    }
+
     /**
      * Add a MediaStreamTrack track (i.e webcam )
      *

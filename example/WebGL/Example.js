@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const __1 = require("../..");
 const GreenScreenStream_1 = require("../../src/GreenScreenStream");
 document.addEventListener("DOMContentLoaded", () => {
     let customChromaKey = {
@@ -7,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
         g: 0,
         b: 0
     };
-    let instance = new GreenScreenStream_1.GreenScreenStream(GreenScreenStream_1.GreenScreenMethod.VirtualBackgroundUsingGreenScreen);
+    let instance = new GreenScreenStream_1.GreenScreenStream(__1.GreenScreenMethod.VirtualBackgroundUsingGreenScreen);
     navigator.getUserMedia({ video: { width: 800, height: 450 }, audio: false }, (m) => {
         instance.addVideoTrack(m.getVideoTracks()[0]);
         instance.initialize("../assets/beach.jpg").then(result => {

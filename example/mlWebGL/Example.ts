@@ -1,4 +1,6 @@
-import { GreenScreenStream, GreenScreenMethod } from "../../src/GreenScreenStream";
+import { BodyPixMode } from './../../src/models/bodypixmode.enum';
+import { GreenScreenMethod } from './../../src/models/green-screen-method.enum';
+import { GreenScreenStream } from "../../src/GreenScreenStream";
 
 document.addEventListener("DOMContentLoaded", () => {
     const bgfile = location.hash.length > 0 ? location.hash.replace("#", "") : "beach.jpg"
@@ -6,42 +8,42 @@ document.addEventListener("DOMContentLoaded", () => {
         let greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground, undefined, 640, 360);
         greenscreen.addVideoTrack(ms.getVideoTracks()[0]);
 
-    //     greenscreen.bufferFrag = `uniform float time;
-    //     uniform vec2 resolution;   
-    //     uniform sampler2D webcam;
-    //     uniform sampler2D background;
-    //     uniform vec4 chromaKey; 
-    //     uniform vec2 maskRange;
+        //     greenscreen.bufferFrag = `uniform float time;
+        //     uniform vec2 resolution;   
+        //     uniform sampler2D webcam;
+        //     uniform sampler2D background;
+        //     uniform vec4 chromaKey; 
+        //     uniform vec2 maskRange;
 
-    //     out vec4 fragColor;
+        //     out vec4 fragColor;
 
-    // void mainImage( out vec4 fragColor, in vec2 fragCoord )
-    // {
-	// vec2 q = 1. - fragCoord.xy / resolution.xy;
-    
-	// vec3 bg = texture( background, q ).xyz;
-	// vec3 fg = texture( webcam, q ).xyz;
-	
-    
-    // float maxrb = max( fg.r, fg.b );
-    // float k = clamp( (fg.g-maxrb)*5.0, 0.0, 1.0 );
-    
+        // void mainImage( out vec4 fragColor, in vec2 fragCoord )
+        // {
+        // vec2 q = 1. - fragCoord.xy / resolution.xy;
+
+        // vec3 bg = texture( background, q ).xyz;
+        // vec3 fg = texture( webcam, q ).xyz;
 
 
-    // float dg = fg.g; 
-    // fg.g = min( fg.g, maxrb*0.8 ); 
-    // fg += dg - fg.g;
+        // float maxrb = max( fg.r, fg.b );
+        // float k = clamp( (fg.g-maxrb)*5.0, 0.0, 1.0 );
 
 
 
-    // fragColor = vec4( mix(fg, bg, k), 1.0 );
-    // }
+        // float dg = fg.g; 
+        // fg.g = min( fg.g, maxrb*0.8 ); 
+        // fg += dg - fg.g;
 
-    // void main(){    
-    //     mainImage(fragColor,gl_FragCoord.xy);      
-    // }  
-        
-    //     `;
+
+
+        // fragColor = vec4( mix(fg, bg, k), 1.0 );
+        // }
+
+        // void main(){    
+        //     mainImage(fragColor,gl_FragCoord.xy);      
+        // }  
+
+        //     `;
 
 
 

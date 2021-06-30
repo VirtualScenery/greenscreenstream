@@ -1,4 +1,5 @@
-import { GreenScreenMethod, GreenScreenStream } from "../../src/GreenScreenStream";
+import { GreenScreenMethod } from "../..";
+import {  GreenScreenStream } from "../../src/GreenScreenStream";
 
 document.addEventListener("DOMContentLoaded", () => {
   navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
