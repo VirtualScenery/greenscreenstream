@@ -6,9 +6,7 @@ import awsomeShaderThingy from "./fractal.glsl";
 document.addEventListener("DOMContentLoaded", () => {
   navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
 
-    const track= mediaStream.getVideoTracks()[0];
-
-    
+    const track= mediaStream.getVideoTracks()[0];    
    
     const  cap = {w: track.getCapabilities().width as number , h:track.getConstraints().height as number};
 

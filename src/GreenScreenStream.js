@@ -95,6 +95,39 @@ void main(){
             this.useML = true;
     }
     /**
+     * Set the backgrounds
+     *
+     * @param {string} src
+     * @return {*}  {(Promise<HTMLImageElement | HTMLVideoElement | Error>)}
+     * @memberof GreenScreenStream
+     */
+    setBackground(src) {
+        let p = new Promise((resolve, reject) => {
+            const isImage = src.match(/\.(jpeg|jpg|png)$/) !== null;
+            if (isImage) {
+                const bg = new Image();
+                bg.onerror = reject;
+                bg.onload = () => {
+                    this.backgroundSource = bg;
+                    resolve(bg);
+                };
+                bg.src = src;
+            }
+            else {
+                const bg = document.createElement("video");
+                bg.autoplay = true;
+                bg.loop = true;
+                bg.onerror = reject;
+                bg.oncanplay = () => {
+                    this.backgroundSource = bg;
+                    resolve(bg);
+                };
+                bg.src = src;
+            }
+        });
+        return p;
+    }
+    /**
      * Set up the rendering, texturesx etc.
      *
      * @private
@@ -106,74 +139,47 @@ void main(){
         const promise = new Promise((resolve, reject) => {
             try {
                 this.ctx = this.canvas.getContext("webgl2");
-                if (backgroundUrl) {
-                    const isImage = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null;
-                    this.backgroundSource = isImage ?
-                        new Image() : document.createElement("video");
+                this.setBackground(backgroundUrl).then(r => {
                     let textureSettings = {};
-                    if (isImage) {
-                        textureSettings = {
-                            "background": {
-                                unit: 33985,
-                                src: backgroundUrl
-                            },
-                            "webcam": {
-                                unit: 33986,
-                                fn: (_prg, gl, texture) => {
-                                    gl.bindTexture(gl.TEXTURE_2D, texture);
-                                    gl.texImage2D(gl.TEXTURE_2D, 0, 6408, 6408, 5121, this.cameraSource);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                                }
+                    textureSettings = {
+                        "background": {
+                            unit: 33985,
+                            fn: (_prg, gl, texture) => {
+                                gl.bindTexture(gl.TEXTURE_2D, texture);
+                                gl.texImage2D(3553, 0, 6408, 6408, 5121, this.backgroundSource);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                             }
-                        };
-                    }
-                    else {
-                        textureSettings = {
-                            "background": {
-                                unit: 33985,
-                                fn: (_prg, gl, texture) => {
-                                    gl.bindTexture(gl.TEXTURE_2D, texture);
-                                    gl.texImage2D(3553, 0, 6408, 6408, 5121, this.backgroundSource);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                                }
-                            },
-                            "webcam": {
-                                unit: 33986,
-                                fn: (_prg, gl, texture) => {
-                                    gl.bindTexture(gl.TEXTURE_2D, texture);
-                                    gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                                }
+                        },
+                        "webcam": {
+                            unit: 33986,
+                            fn: (_prg, gl, texture) => {
+                                gl.bindTexture(gl.TEXTURE_2D, texture);
+                                gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                             }
-                        };
-                        this.backgroundSource.autoplay = true;
-                        this.backgroundSource.loop = true;
-                    }
-                    this.backgroundSource.addEventListener(isImage ? "load" : "canplay", () => {
-                        this.demolished = new demolishedrenderer_1.DR(this.canvas, this.mainVert, this.mainFrag);
-                        this.demolished.aA(textureSettings, () => {
-                            this.demolished.aB("A", this.mainVert, this.bufferFrag, ["background", "webcam"], {
-                                "chromaKey": (location, gl, p, timestamp) => {
-                                    gl.uniform4f(location, this.chromaKey.r, this.chromaKey.g, this.chromaKey.b, 1.);
-                                },
-                                "maskRange": (location, gl, p, timestamp) => {
-                                    gl.uniform2f(location, this.maskRange.x, this.maskRange.y);
-                                }
-                            });
-                            resolve(true);
+                        }
+                    };
+                    this.demolished = new demolishedrenderer_1.DR(this.canvas, this.mainVert, this.mainFrag);
+                    this.demolished.aA(textureSettings, () => {
+                        this.demolished.aB("A", this.mainVert, this.bufferFrag, ["background", "webcam"], {
+                            "chromaKey": (location, gl, p, timestamp) => {
+                                gl.uniform4f(location, this.chromaKey.r, this.chromaKey.g, this.chromaKey.b, 1.);
+                            },
+                            "maskRange": (location, gl, p, timestamp) => {
+                                gl.uniform2f(location, this.maskRange.x, this.maskRange.y);
+                            }
                         });
+                        resolve(true);
                     });
-                    this.backgroundSource.src = backgroundUrl;
-                }
+                }).catch(err => {
+                    reject(err);
+                });
             }
             catch (error) {
                 reject(error);

@@ -56,7 +56,15 @@ export declare class GreenScreenStream {
     bufferFrag: string;
     constructor(greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number);
     /**
-     * Set up the rendering, texture etc.
+     * Set the backgrounds
+     *
+     * @param {string} src
+     * @return {*}  {(Promise<HTMLImageElement | HTMLVideoElement | Error>)}
+     * @memberof GreenScreenStream
+     */
+    setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error>;
+    /**
+     * Set up the rendering, texturesx etc.
      *
      * @private
      * @param {string} [backgroundUrl]

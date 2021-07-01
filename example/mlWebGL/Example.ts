@@ -49,6 +49,17 @@ document.addEventListener("DOMContentLoaded", () => {
             greenscreen.start();
             const ms = greenscreen.captureStream(60); // capture result as a MediaSteam and attacj to video element
             document.querySelector("video").srcObject = ms;
+
+            document.querySelector(".swap").classList.remove("hide");
+
+            document.querySelectorAll(".swap-image").forEach ( s => {
+                s.addEventListener("click", (e) => {
+                    const  src = (e.target as HTMLElement).dataset.src;
+                        greenscreen.setBackground(src);
+                });
+            });
+
+
         }).catch(err => {
             console.log(err);
         });
