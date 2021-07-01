@@ -6,14 +6,10 @@ const bodyPix = require('@tensorflow-models/body-pix');
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
 
-import { GreenScreenConfig } from './models/green-screen-config.type';
-import bufferFragmentShader from "./glsl/buffer-frag.glsl";
-import bufferVertexShader from "./glsl/buffer-vert.glsl";
-import mainVertexShader from './glsl/main-vert.glsl';
-import mainFragmentShader from './glsl/main-frag.glsl';
-import { MaskSettings } from './models/masksettings.type';
+import { GreenScreenConfig } from './models/green-screen-config.interface';
+import { MaskSettings } from './models/masksettings.interface';
 import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
-import { ImageTextureSettings, VideoTextureSettings } from './models/texturesettings.type';
+import { ImageTextureSettings, VideoTextureSettings } from './models/texturesettings.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
 import { BodyPixConfig } from './models/bodypix-config.interface';
 import { getBodyPixMode } from './utils/get-bodypix-mode.util';
@@ -414,8 +410,8 @@ export class GreenScreenStream {
      */
     private setConfig(config?: MaskSettings): void {
         this.opacity = config?.opacity || 1.0;
-        this.flipHorizontal = config?.flipHorizontal || true
-        this.maskBlurAmount = config?.maskBlurAmount || 3;
+        this.flipHorizontal = config?.flipHorizontal   || true
+        this.maskBlurAmount = config?.maskBlurAmount   || 3;
         this.foregroundColor = config?.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
         this.backgroundColor = config?.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
 

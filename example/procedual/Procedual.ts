@@ -1,10 +1,12 @@
-import { GreenScreenMethod } from "../..";
-import {  GreenScreenStream } from "../../src/GreenScreenStream";
+
+import { GreenScreenMethod } from 'dist/src/models/green-screen-method.enum';
+import { GreenScreenStream } from "dist/src/GreenScreenStream";
 
 // thank you Aurélien Prunier
-import awsomeShaderThingy from "./fractal.glsl";
+import { FRACTAL } from "./fractal";
 
 document.addEventListener("DOMContentLoaded", () => {
+  //@ts-ignore
   navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
 
     const track= mediaStream.getVideoTracks()[0];
@@ -19,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
       , cap.w , cap.h);
     greenscreen.addVideoTrack(track);
     // override the default shader
-    greenscreen.bufferFrag = awsomeShaderThingy;
+    greenscreen.bufferFrag = FRACTAL;
     greenscreen.initialize(`../assets/iChannel0.png`).then(state => {
       greenscreen.start();
       console.log("Starting");

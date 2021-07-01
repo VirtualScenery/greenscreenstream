@@ -1,9 +1,9 @@
-import { BodyPixMode } from './../../src/models/bodypixmode.enum';
-import { GreenScreenMethod } from './../../src/models/green-screen-method.enum';
-import { GreenScreenStream } from "../../src/GreenScreenStream";
+import { GreenScreenMethod } from 'dist/src/models/green-screen-method.enum';
+import { GreenScreenStream } from "dist/src/GreenScreenStream";
 
 document.addEventListener("DOMContentLoaded", () => {
-    const bgfile = location.hash.length > 0 ? location.hash.replace("#", "") : "beach.jpg"
+    const bgfile = location.hash.length > 0 ? location.hash.replace("#", "") : "beach.jpg";
+    //@ts-ignore
     navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (ms: MediaStream) => {
         let greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground, undefined, 640, 360);
         greenscreen.addVideoTrack(ms.getVideoTracks()[0]);
@@ -44,8 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // }  
 
         //     `;
-
-
 
         greenscreen.initialize(`../assets/${bgfile}`).then(result => {
             greenscreen.start();

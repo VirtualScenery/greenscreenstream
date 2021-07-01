@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const __1 = require("../..");
-const GreenScreenStream_1 = require("../../src/GreenScreenStream");
+const GreenScreenStream_1 = require("../src/GreenScreenStream");
 document.addEventListener("DOMContentLoaded", () => {
     let customChromaKey = {
         r: 0,

@@ -1,4 +1,4 @@
-export type ImageTextureSettings = {
+export interface ImageTextureSettings {
     background: {
         unit: number,
         src: string
@@ -9,7 +9,7 @@ export type ImageTextureSettings = {
     }
 }
 
-export type VideoTextureSettings = {
+export interface VideoTextureSettings {
     background: {
         unit: number,
         fn: Function

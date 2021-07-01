@@ -1,7 +1,8 @@
-import { GreenScreenMethod } from "../..";
-import {  GreenScreenStream } from "../../src/GreenScreenStream";
+import { GreenScreenMethod } from 'dist/src/models/green-screen-method.enum';
+import { GreenScreenStream } from "dist/src/GreenScreenStream";
 
 document.addEventListener("DOMContentLoaded", () => {
+  //@ts-ignore
   navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
     
     let greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground,undefined, 640, 360);

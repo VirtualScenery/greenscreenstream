@@ -11,7 +11,6 @@ export function getBodyPixMode(mode: BodyPixMode): BodyPixConfig {
             return bodyPixPrecise;
         
         case BodyPixMode.Maximum:
-            console.log('using maximum')
             return bodyPixMaximum;
         
         case BodyPixMode.Standard:

@@ -1,8 +1,8 @@
-import { MaskSettings } from './masksettings.type';
+import { MaskSettings } from './masksettings.interface';
 import { BodyPixConfig } from './bodypix-config.interface';
 import { BodyPixMode } from './bodypixmode.enum';
 
-export type GreenScreenConfig = {
+export interface GreenScreenConfig {
     maskSettings?: MaskSettings,
     bodyPixMode?: BodyPixMode,
     bodyPixConfig?: BodyPixConfig

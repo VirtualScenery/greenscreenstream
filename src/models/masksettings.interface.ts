@@ -1,4 +1,4 @@
-export type MaskSettings = {
+export interface MaskSettings {
     opacity?: number,
     flipHorizontal?: boolean,
     maskBlurAmount?: number
