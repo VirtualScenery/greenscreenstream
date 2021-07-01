@@ -1,15 +1,5 @@
-export type ImageTextureSettings = {
-    background: {
-        unit: number,
-        src: string
-    }
-    webcam: {
-        unit: number,
-        fn: Function
-    }
-}
 
-export type VideoTextureSettings = {
+export type TextureSettings = {
     background: {
         unit: number,
         fn: Function

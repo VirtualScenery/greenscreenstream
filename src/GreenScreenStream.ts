@@ -14,7 +14,7 @@ import mainVertexShader from './glsl/main-vert.glsl';
 import mainFragmentShader from './glsl/main-frag.glsl';
 import { MaskSettings } from './models/masksettings.type';
 import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
-import { ImageTextureSettings, VideoTextureSettings } from './models/texturesettings.type';
+import { TextureSettings } from './models/texturesettings.type';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
 import { BodyPixConfig } from './models/bodypix-config.interface';
 import { getBodyPixMode } from './utils/get-bodypix-mode.util';
@@ -97,7 +97,7 @@ export class GreenScreenStream {
         });
     }
 
-    
+
     /**
      * Set up the rendering, texturesx etc.
      *
@@ -109,70 +109,25 @@ export class GreenScreenStream {
     private setupRenderer(backgroundUrl?: string): Promise<boolean | Error> {
 
         return new Promise<boolean | Error>(async (resolve, reject) => {
-            try {
-                // What should happen in this instance? Throw an error? Promise would never get resolved or rejected in previous implementation
-                if (!backgroundUrl)
-                    resolve(false);
 
-                let textureSettings: ImageTextureSettings | VideoTextureSettings;
-                this.ctx = this.canvas.getContext("webgl2");
+            // What should happen in this instance? Throw an error? Promise would never get resolved or rejected in previous implementation
+            if (!backgroundUrl)
+                reject(new Error('No background url provided'));
+                
+            this.ctx = this.canvas.getContext("webgl2");
+            await this.setBackground(backgroundUrl);
 
-                const isImage = backgroundUrl.match(/\.(jpeg|jpg|png)$/) !== null;
-                this.backgroundSource = isImage ? new Image() : document.createElement("video");
+            const textureSettings: TextureSettings = this.getTextureSettings();
 
-                if (isImage)
-                    textureSettings = this.getImageTextureSettings(backgroundUrl);
-
-                else {
-                    textureSettings = this.getVideoTextureSettings();
-
-                    this.backgroundSource.autoplay = true;
-                    this.backgroundSource.loop = true;
-                }
-
-                this.onSourceLoaded(isImage).then( async () => {
-                    console.log('loaded source')
-                    await this.prepareRenderer(textureSettings);
-                    resolve(true);
-                });             
-                this.backgroundSource.src = backgroundUrl;
-                console.log('setting source')
-
-            } catch (error) {
-                reject(error)
-            }
+            await this.prepareRenderer(textureSettings);
+            resolve(true);
         });
     }
 
     /**
-     * Get the texturesettings needed for an image background
-     * @param backgroundUrl 
+     * Get the necessary texturesettings
      */
-    private getImageTextureSettings(backgroundUrl: string): ImageTextureSettings {
-        return {
-            "background": {
-                unit: 33985,
-                src: backgroundUrl
-            },
-            "webcam": {
-                unit: 33986,
-                fn: (_prg: WebGLProgram, gl: WebGLRenderingContext, texture: WebGLTexture) => {
-                    gl.bindTexture(gl.TEXTURE_2D, texture);
-                    gl.texImage2D(gl.TEXTURE_2D, 0, 6408, 6408, 5121, this.cameraSource);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                }
-            }
-
-        }
-    }
-
-    /**
-     * Get the texturesettings needed for a video background
-     */
-    private getVideoTextureSettings(): VideoTextureSettings {
+    private getTextureSettings(): TextureSettings {
         return {
             "background": {
                 unit: 33985,
@@ -197,19 +152,7 @@ export class GreenScreenStream {
                 }
             }
         }
-    }
- 
-    /**
-     * Adds a event listener to the background source that determines if it's loaded.
-     * @param isImage determines if the current background source is an image or a video.
-     * @Returns a promise that resolves as soon as resource is loaded.
-     */
-    private onSourceLoaded(isImage: boolean): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.backgroundSource.addEventListener(isImage ? "load" : "canplay", () => {
-                resolve();
-            });
-        });
+
     }
 
     /**
@@ -217,7 +160,7 @@ export class GreenScreenStream {
      * @param textureSettings
      * @todo clean this up somehow
      */
-    private prepareRenderer(textureSettings: ImageTextureSettings | VideoTextureSettings): Promise<void> {
+    private prepareRenderer(textureSettings: TextureSettings): Promise<void> {
         return new Promise((resolve, reject) => {
             this.demolished = new DR(this.canvas, this.mainVert, this.mainFrag);
             this.demolished.aA(
@@ -239,7 +182,7 @@ export class GreenScreenStream {
                                     location,
                                     this.chromaKey.r,
                                     this.chromaKey.g,
-                                    this.chromaKey.b, 
+                                    this.chromaKey.b,
                                     1.
                                 )
                             },
