@@ -5,6 +5,7 @@ import quantize from 'quantize'
 const bodyPix = require('@tensorflow-models/body-pix');
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
+import { getBackend } from '@tensorflow/tfjs';
 
 import { GreenScreenConfig } from './models/green-screen-config.type';
 import bufferFragmentShader from "./glsl/buffer-frag.glsl";
@@ -64,7 +65,41 @@ export class GreenScreenStream {
     }
 
     /**
-     * Set up the rendering, textures, etc.
+     * Set the backgrounds 
+     *
+     * @param {string} src
+     * @return {*}  {(Promise<HTMLImageElement | HTMLVideoElement | Error>)}
+     * @memberof GreenScreenStream
+     */
+    setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error> {
+        return new Promise<any>((resolve, reject) => {
+            const isImage = src.match(/\.(jpeg|jpg|png)$/) !== null;
+
+            if (isImage) {
+                const bg = new Image();
+                bg.onerror = reject;
+                bg.onload = () => {
+                    this.backgroundSource = bg;
+                    resolve(bg);
+                }
+                bg.src = src;
+            } else {
+                const bg = document.createElement("video");
+                bg.autoplay = true;
+                bg.loop = true;
+                bg.onerror = reject;
+                bg.oncanplay = () => {
+                    this.backgroundSource = bg;
+                    resolve(bg);
+                }
+                bg.src = src;
+            }
+        });
+    }
+
+    
+    /**
+     * Set up the rendering, texturesx etc.
      *
      * @private
      * @param {string} [backgroundUrl]
