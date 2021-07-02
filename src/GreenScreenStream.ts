@@ -84,7 +84,7 @@ export class GreenScreenStream {
                 bg.autoplay = true;
                 bg.loop = true;
                 bg.onerror = reject;
-                bg.oncanplay = () => {
+                bg.onloadeddata = () => {
                     this.backgroundSource = bg;
                     resolve(bg);
                 }
@@ -347,6 +347,7 @@ export class GreenScreenStream {
             this.mediaStream.getVideoTracks().forEach(track => {
                 track.stop();
             });
+            this.ctx = null;
         }
     }
 
@@ -373,7 +374,7 @@ export class GreenScreenStream {
             if (!this.useML)
                 resolve(this);
 
-            const model = await asyncCall(this.setupBodyPixModel(config));
+            const model = await asyncCall(this.loadBodyPixModel(config));
             if (model.error)
                 reject(model.error);
 
@@ -403,18 +404,31 @@ export class GreenScreenStream {
         console.log(this.segmentConfig)
     }
 
+    public async setBodyPixModel(config: GreenScreenConfig) {
+        const model = await asyncCall(this.loadBodyPixModel(config));
+            if (model.error)
+                throw model.error;
+
+            console.log(model.result);
+            this.model = model.result;
+    }
+
     /**
      * Sets up the bodypix model either via custom config or a preset.
      * If neither is provided, a default config is used.
      * @param config 
      */
-    private async setupBodyPixModel(config: GreenScreenConfig) {
+    private async loadBodyPixModel(config: GreenScreenConfig) {
         let bodyPixMode: BodyPixConfig;
-
-        if (config?.bodyPixConfig)
+        console.log(config)
+        if (config?.bodyPixConfig) {
             bodyPixMode = config?.bodyPixConfig;
-        else
+            console.log("No config found. Fallining back to mode")
+        }
+        else{
             bodyPixMode = getBodyPixMode(config?.bodyPixMode);
+
+        }
 
         return bodyPix.load(bodyPixMode);
     }
