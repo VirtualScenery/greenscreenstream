@@ -61,7 +61,7 @@ export class GreenScreenStream {
     }
 
     /**
-     * Set the backgrounds 
+     * Set the background
      *
      * @param {string} src
      * @return {*}  {(Promise<HTMLImageElement | HTMLVideoElement | Error>)}
@@ -73,7 +73,9 @@ export class GreenScreenStream {
 
             if (isImage) {
                 const bg = new Image();
-                bg.onerror = reject;
+                bg.onerror = () => {
+                    reject(new Error(`Unable to background image from ${src}`))
+                };
                 bg.onload = () => {
                     this.backgroundSource = bg;
                     resolve(bg);
@@ -83,7 +85,9 @@ export class GreenScreenStream {
                 const bg = document.createElement("video");
                 bg.autoplay = true;
                 bg.loop = true;
-                bg.onerror = reject;
+                bg.onerror = () => {
+                    reject(new Error(`Unable to load background video from ${src}`))
+                };
                 bg.onloadeddata = () => {
                     this.backgroundSource = bg;
                     resolve(bg);
@@ -102,20 +106,20 @@ export class GreenScreenStream {
      * @return {*}  {Promise<boolean | Error>}
      * @memberof GreenScreenStream
      */
-    private setupRenderer(backgroundUrl?: string): Promise<boolean | Error> {
+    private setupRenderer(backgroundUrl: string): Promise<boolean | Error> {
 
         return new Promise<boolean | Error>(async (resolve, reject) => {
 
-            // What should happen in this instance? Throw an error? Promise would never get resolved or rejected in previous implementation
-            if (!backgroundUrl)
-                reject(new Error('No background url provided'));
-                
             this.ctx = this.canvas.getContext("webgl2");
-            await this.setBackground(backgroundUrl);
+            await this.setBackground(backgroundUrl).catch(err => {
+                reject(err);
+            });
 
             const textureSettings: TextureSettings = this.getTextureSettings();
 
-            await this.prepareRenderer(textureSettings);
+            await this.prepareRenderer(textureSettings).catch(err => {
+                reject(new Error("Cannot setup renderer"))
+            });
             resolve(true);
         });
     }
@@ -154,50 +158,55 @@ export class GreenScreenStream {
     /**
      * Instantiates & prepares the demolishedRenderer 
      * @param textureSettings
-     * @todo clean this up somehow
      */
-    private prepareRenderer(textureSettings: TextureSettings): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.demolished = new DR(this.canvas, this.mainVert, this.mainFrag);
-            this.demolished.aA(
-                textureSettings
-                , () => {
-                    this.demolished.aB(
-                        "A",
-                        this.mainVert,
-                        this.bufferFrag,
-                        ["background", "webcam"],
-                        {
-                            "chromaKey": (
-                                location: WebGLUniformLocation,
-                                gl: WebGLRenderingContext,
-                                p: WebGLProgram,
-                                timestamp: number
-                            ) => {
-                                gl.uniform4f(
-                                    location,
-                                    this.chromaKey.r,
-                                    this.chromaKey.g,
-                                    this.chromaKey.b,
-                                    1.
-                                )
-                            },
-                            "maskRange": (
-                                location: WebGLUniformLocation,
-                                gl: WebGLRenderingContext,
-                                p: WebGLProgram,
-                                timestamp: number
-                            ) => {
-                                gl.uniform2f(
-                                    location,
-                                    this.maskRange.x,
-                                    this.maskRange.y
-                                )
+    private prepareRenderer(textureSettings: TextureSettings): Promise<boolean | Error> {
+        return new Promise<boolean | Error>( async(resolve, reject) => {
+            try {
+
+                this.demolished = new DR(this.canvas, this.mainVert, this.mainFrag);
+                this.demolished.aA(
+                    textureSettings
+                    , () => {
+                        this.demolished.aB(
+                            "A",
+                            this.mainVert,
+                            this.bufferFrag,
+                            ["background", "webcam"],
+                            {
+                                "chromaKey": (
+                                    location: WebGLUniformLocation,
+                                    gl: WebGLRenderingContext,
+                                    p: WebGLProgram,
+                                    timestamp: number
+                                ) => {
+                                    gl.uniform4f(
+                                        location,
+                                        this.chromaKey.r,
+                                        this.chromaKey.g,
+                                        this.chromaKey.b,
+                                        1.
+                                    )
+                                },
+                                "maskRange": (
+                                    location: WebGLUniformLocation,
+                                    gl: WebGLRenderingContext,
+                                    p: WebGLProgram,
+                                    timestamp: number
+                                ) => {
+                                    gl.uniform2f(
+                                        location,
+                                        this.maskRange.x,
+                                        this.maskRange.y
+                                    )
+                                }
                             }
-                        }
-                    );
-                    resolve();
-                });
+                        );
+                        resolve(true);
+                    });
+            } catch (err) {
+                reject(new Error(err));
+            }
+
         });
     }
 
@@ -389,8 +398,8 @@ export class GreenScreenStream {
      */
     private setConfig(config?: MaskSettings): void {
         this.opacity = config?.opacity || 1.0;
-        this.flipHorizontal = config?.flipHorizontal   || true
-        this.maskBlurAmount = config?.maskBlurAmount   || 3;
+        this.flipHorizontal = config?.flipHorizontal || true
+        this.maskBlurAmount = config?.maskBlurAmount || 3;
         this.foregroundColor = config?.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
         this.backgroundColor = config?.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
 
@@ -406,11 +415,11 @@ export class GreenScreenStream {
 
     public async setBodyPixModel(config: GreenScreenConfig) {
         const model = await asyncCall(this.loadBodyPixModel(config));
-            if (model.error)
-                throw model.error;
+        if (model.error)
+            throw model.error;
 
-            console.log(model.result);
-            this.model = model.result;
+        console.log(model.result);
+        this.model = model.result;
     }
 
     /**
@@ -425,7 +434,7 @@ export class GreenScreenStream {
             bodyPixMode = config?.bodyPixConfig;
             console.log("No config found. Fallining back to mode")
         }
-        else{
+        else {
             bodyPixMode = getBodyPixMode(config?.bodyPixMode);
 
         }
