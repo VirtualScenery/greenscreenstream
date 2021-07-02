@@ -8,6 +8,8 @@
             margin: 0;
             padding: 0;
             background: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: rgb(63, 63, 63);
         }
 
         video {
@@ -21,25 +23,39 @@
             left:10px;
             width: auto;
             padding: 1rem;
-            background: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.6);
+            border-radius: 10px;
         }
 
-        .hide{
+        .hide {
             display: none;
         }
-        
 
+        h4 {
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
         
     </style>
 </head>
 
 <body>
-    <video id="example" autoplay controls width="640" height="360">
+    <video id="example" autoplay width="640" height="360">
     </video>
     <div class="swap hide">
+        <h4>Backgrounds</h4>
         <button class="swap-image" data-src="../assets/beach.jpg">Beach</button>
         <button class="swap-image" data-src="../assets/bar.jpg">Bar</button>
         <button class="swap-image" data-src="../assets/snow.mp4">Snow</button>
+        <br>
+        <br>
+        <h4>BodyPix Quality</h4>
+        <button class="swap-quality" data-mode="0">Fast</button>
+        <button class="swap-quality" data-mode="1">Standard</button>
+        <button class="swap-quality" data-mode="2">Precise</button>
+        <br>
+        <button class="swap-quality" data-mode="3">Maximum</button>
+
     </div>
     <script src="../build/mlwebgl-bundle.js""></script>
     </script>

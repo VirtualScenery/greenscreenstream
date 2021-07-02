@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const __1 = require("../..");
 const GreenScreenStream_1 = require("../../src/GreenScreenStream");
 document.addEventListener("DOMContentLoaded", () => {
     navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream) => {
-        let greenscreen = new GreenScreenStream_1.GreenScreenStream(GreenScreenStream_1.GreenScreenMethod.VirtualBackground, undefined, 640, 360);
+        let greenscreen = new GreenScreenStream_1.GreenScreenStream(__1.GreenScreenMethod.VirtualBackground, undefined, 640, 360);
         greenscreen.addVideoTrack(mediaStream.getVideoTracks()[0]);
         // override the default shader
         greenscreen.bufferFrag = `

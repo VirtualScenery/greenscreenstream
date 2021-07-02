@@ -1,10 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const bodypixmode_enum_1 = require("./../../src/models/bodypixmode.enum");
+const green_screen_method_enum_1 = require("./../../src/models/green-screen-method.enum");
 const GreenScreenStream_1 = require("../../src/GreenScreenStream");
 document.addEventListener("DOMContentLoaded", () => {
     const bgfile = location.hash.length > 0 ? location.hash.replace("#", "") : "beach.jpg";
     navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (ms) => {
-        let greenscreen = new GreenScreenStream_1.GreenScreenStream(GreenScreenStream_1.GreenScreenMethod.VirtualBackground, undefined, 640, 360);
+        let greenscreen = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackground, undefined, 640, 360);
         greenscreen.addVideoTrack(ms.getVideoTracks()[0]);
         //     greenscreen.bufferFrag = `uniform float time;
         //     uniform vec2 resolution;   
@@ -29,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
         //     mainImage(fragColor,gl_FragCoord.xy);      
         // }  
         //     `;
-        greenscreen.initialize(`../assets/${bgfile}`).then(result => {
+        greenscreen.initialize(`../assets/${bgfile}`, { bodyPixMode: bodypixmode_enum_1.BodyPixMode.Maximum }).then(result => {
             greenscreen.start();
             const ms = greenscreen.captureStream(60); // capture result as a MediaSteam and attacj to video element
             document.querySelector("video").srcObject = ms;
