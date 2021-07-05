@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-    mode:"production", 
+    mode:"development", 
     watch: false,
     entry: {
       webgl: './dist/example/WebGL/Example.js',
@@ -17,11 +17,5 @@ module.exports = {
       modules: [path.resolve(__dirname, './'), 'node_modules']
     },
     module: {
-      rules: [
-        {
-          test: /\.glsl$/i,
-          use: 'raw-loader',
-        },
-      ],
     }
   }
