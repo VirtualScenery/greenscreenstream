@@ -1,20 +1,26 @@
-# GreenScreenStream
+ <p>
+  <a href="https://github.com/coloquium/greenscreenstream" target="blank"><img src="https://i.ibb.co/hmnR2jz/gss-v1.png" width="230" alt="GreenScreenStream Logo" /></a>
+</p>
+<h1>
+  GreenScreenStream
+</h1>
 
- ## about
+## About
+GreenScreenStream provides a wide range of options for manipulating Mediastreams.
 
 Generate a new MediaStream for `<canvas>` ,`<video>`  elements based on provided MediaStreamTrack and a background image/video just using JavaScript.  
 
-After processed and "green screened" you can capture the stream and use it in your RTCPeerConnections for instance.
+After processed and "green screened" you can capture the stream and use it in your WebRTC calls for instance.
 
-all rendering is made realtime using a WebGL2 pixel shader (glsl) and  machine-learing.
+All rendering is done in realtime using a WebGL2 pixel shader (glsl) and optionally machine-learning.
 
 *Regards Magnus Thor*
  
-## install
+## Install
 
     npm install greenscreenstream  
 
-## examples
+## Examples
 
 Below you find a few different examples of greenscreenstream.
 
@@ -35,75 +41,81 @@ Below you find a few different examples of greenscreenstream.
 # GreenScreenStream API
 ## constructor
 
-Create an instance of GreenScreenStream
+Creates an instance of GreenScreenStream
 
-
-    constructor(greenScreenMethod: GreenScreenMethod,canvas?: HTMLCanvasElement, width?: number, height?: number)
+```ts
+constructor(greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number)
+```
 
 ## methods
 
 ###  initialize
 
-Initlialize the GreenScreenStream with the provided background (image or video) and settings.
+Initlializes the GreenScreenStream with the provided background (image or video) and settings.
 
-    initialize(backgroundUrl?: string, config?: MaskSettings): Promise<boolean> 
+```ts
+initialize(backgroundUrl?: string, config?: GreenScreenConfig): Promise<boolean> 
+```
+
 ### addVideoTrack
 
 Adds a `MediaStreamTrack` track (i.e webcam)
-
-    addVideoTrack(track:  MediaStreamTrack):  void;
-
+```ts
+addVideoTrack(track:  MediaStreamTrack):  void;
+```
 ### start
 
-Start render the greenscreen
-
-    start():void
-
+Starts rendering the greenscreen
+```ts
+start():void
+```
 ### stop():void
 
-Stop render the greenscreen
-
-    stop(stopMediaStreams?:boolean):void
+Stops rendering the greenscreen
+```ts
+stop(stopMediaStreams?:boolean):void
+```
 
 ### captureStream
 
 Capture the rendered result to a MediaStream that you apply to your `<video>` element.
-
-    captureStream(fps?:  number):  MediaStream;    
-
+```ts
+captureStream(fps?:  number):  MediaStream;    
+```
 ### getColorsFromStream
 
-Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack.
-
-     getColorsFromStream(): { palette: any, dominant: any } {
-
+Gets the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack.
+```ts
+getColorsFromStream(): { palette: any, dominant: any } {
+```
 ### setChromaKey
 
 Pass a mask (rgb), color to the shader , to use as a mask.   Should be the `dominant color`, or on of the `palette` colors detected. See `getColorsFromStream` 
 
-
-        setChromaKey(r: number, g: number, b: number, threshold?: number): void;
+```ts
+setChromaKey(r: number, g: number, b: number, threshold?: number): void;
+```
 
 ### setRange
    Range is used to decide the amount of color to be used from either foreground or background.Playing with this variable will decide how much the foreground and background blend together.  
-
-       setMaskRange(x:number,y:number):void
-
+```ts
+setMaskRange(x:number,y:number):void
+```
 ###  dominant
 
 Get the most dominant color based on imageData and number of pixels
-
-    dominant(imageData: ImageData, pixelCount: number) {
+```ts
+dominant(imageData: ImageData, pixelCount: number) {
+```
 
 ### palette
 
    Get an Array of the most siginficant colors in the MediaTrack
-
-
-    pallette(imageData: ImageData, pixelCount: number) {
-
+```ts
+pallette(imageData: ImageData, pixelCount: number) {
+```
 ## MaskSettings
-
+```ts
     MaskSettings = {
 
             opacity: number;                // 0.- 1.
@@ -129,11 +141,12 @@ Get the most dominant color based on imageData and number of pixels
             };
             
     };
-
+```
 ## GreenScreenMethod ( enum )
-
+```ts
     enum GreenScreenMethod {
      Mask = 0, // get the mask
      VirtualBackground = 1, // get mask and apply the provided background
      VirtualBackgroundUsingGreenScreen = 2 // user has a green screen , use shader only.
     }
+```
