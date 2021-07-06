@@ -6,8 +6,8 @@ import { GreenScreenStream } from "dist/src/GreenScreenStream";
 import { FRACTAL } from "./fractal";
 
 document.addEventListener("DOMContentLoaded", () => {
-  //@ts-ignore
-  navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
+  
+  navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then( async (mediaStream: MediaStream) => {
 
     const track= mediaStream.getVideoTracks()[0];    
    
@@ -17,7 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground,
       document.querySelector("canvas")
       , cap.w , cap.h);
-    greenscreen.addVideoTrack(track);
+      
+    await greenscreen.addVideoTrack(track);
     // override the default shader
     greenscreen.bufferFrag = FRACTAL;
     greenscreen.initialize(`../assets/iChannel0.png`).then(state => {

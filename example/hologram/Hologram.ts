@@ -2,12 +2,11 @@ import { GreenScreenMethod } from 'dist/src/models/green-screen-method.enum';
 import { GreenScreenStream } from "dist/src/GreenScreenStream";
 
 document.addEventListener("DOMContentLoaded", () => {
-  //@ts-ignore
-  navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream: MediaStream) => {
+  navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then( async(mediaStream: MediaStream) => {
     
     let greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground,undefined, 640, 360);
    
-    greenscreen.addVideoTrack(mediaStream.getVideoTracks()[0]);
+    await greenscreen.addVideoTrack(mediaStream.getVideoTracks()[0]);
     // override the default shader
     greenscreen.bufferFrag = `
         uniform float time;

@@ -10,10 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     let instance = new GreenScreenStream(GreenScreenMethod.VirtualBackgroundUsingGreenScreen);
-    //@ts-ignore
-    navigator.getUserMedia({ video: { width: 800, height: 450 }, audio: false }, (m: MediaStream) => {
+ 
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then( async(m: MediaStream) => {
 
-        instance.addVideoTrack(m.getVideoTracks()[0]);
+        await instance.addVideoTrack(m.getVideoTracks()[0]);
 
         instance.initialize("../assets/beach.jpg").then(result => {
             const detectedColor = document.querySelector(".dominates") as HTMLElement;
