@@ -13,8 +13,6 @@ Generate a new MediaStream for `<canvas>` ,`<video>`  elements based on provided
 After processed and "green screened" you can capture the stream and use it in your WebRTC calls for instance.
 
 All rendering is done in realtime using a WebGL2 pixel shader (glsl) and optionally machine-learning.
-
-*Regards Magnus Thor*
  
 ## Install
 
@@ -27,7 +25,7 @@ Below you find a few different examples of greenscreenstream.
 
  [https://coloquium.github.io/greenscreenstream/example/mlWebGL ](https://coloquium.github.io/greenscreenstream/example/mlWebGL)
 
- [https://coloquium.github.io/greenscreenstream/example/WebGL#snow.mp4 ](https://coloquium.github.io/greenscreenstream/example/WebGL#snow.mp4)
+ [https://coloquium.github.io/greenscreenstream/example/WebGL#snow.mp4 ](https://coloquium.github.io/greenscreenstream/example/WebGL)
  
  [https://coloquium.github.io/greenscreenstream/example/hologram ](https://coloquium.github.io/greenscreenstream/example/hologram)
 
