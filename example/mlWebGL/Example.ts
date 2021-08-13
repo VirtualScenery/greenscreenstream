@@ -10,8 +10,8 @@ async function startStream(quality?: BodyPixMode) {
     const inStream: MediaStream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
 
     greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground, null, 1280, 720);
-    greenscreen.addVideoTrack(inStream.getVideoTracks()[0]);
 
+    await greenscreen.addVideoTrack(inStream.getVideoTracks()[0]);
 
     await greenscreen.initialize(`../assets/${bgfile}`, { bodyPixMode: quality });
     greenscreen.start();

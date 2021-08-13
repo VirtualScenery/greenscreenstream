@@ -448,14 +448,21 @@ export class GreenScreenStream {
      * @param {MediaStreamTrack} track
      * @memberof GreenScreenStream
      */
-    addVideoTrack(track: MediaStreamTrack): void {
-        this.mediaStream.addTrack(track);
-        this.sourceVideo = document.createElement("video") as HTMLVideoElement;
-        this.sourceVideo.width = this.canvas.width, this.sourceVideo.height = this.canvas.height;
-        this.sourceVideo.autoplay = true;
-        this.sourceVideo.srcObject = this.mediaStream;
-        this.sourceVideo.play();
-        this.cameraSource = this.sourceVideo;
+    addVideoTrack(track: MediaStreamTrack) {
+        return new Promise<void>((resolve, reject) => {
+            this.mediaStream.addTrack(track);
+            this.sourceVideo = document.createElement("video") as HTMLVideoElement;
+
+            this.sourceVideo.width = this.canvas.width, this.sourceVideo.height = this.canvas.height;
+            this.sourceVideo.autoplay = true;
+            this.sourceVideo.srcObject = this.mediaStream;
+            
+            this.sourceVideo.onloadeddata = ()=> {
+                this.sourceVideo.play();
+                this.cameraSource = this.sourceVideo;
+                resolve();
+            }
+        })
     }
     /**
      * Capture the rendered result to a MediaStream
