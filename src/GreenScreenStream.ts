@@ -320,7 +320,7 @@ export class GreenScreenStream {
             this.flipHorizontal
         );
 
-        this.rafId = requestAnimationFrame(() => this.renderVirtualBackground(t));
+        this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
         this.demolished.R(t / 1000)
     }
 
@@ -339,7 +339,7 @@ export class GreenScreenStream {
 
         const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
         ctx.putImageData(maskedImage, 0, 0);
-        this.rafId = requestAnimationFrame(() => this.renderMask(t, ctx));
+        this.rafId = requestAnimationFrame((ts) => this.renderMask(ts, ctx));
         this.demolished.R(t / 1000);
     }
 
