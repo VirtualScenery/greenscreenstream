@@ -1,5 +1,5 @@
-import { GreenScreenMethod } from 'dist/src/models/green-screen-method.enum';
-import { GreenScreenStream } from "dist/src/GreenScreenStream";
+import { GreenScreenStream } from "../../src/GreenScreenStream";
+import { GreenScreenMethod } from "../../src/models/green-screen-method.enum";
 
 document.addEventListener("DOMContentLoaded", () => {
   navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then( async(mediaStream: MediaStream) => {
@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const fps = 60;
           // Instance.render(fps);
           // Capture the stream en send back to a video element
-          greenscreen.start();
+          greenscreen.start(25);
           const ms = greenscreen.captureStream(fps);
           document.querySelector("video").srcObject = ms;
         });

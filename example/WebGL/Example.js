@@ -1,16 +1,25 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const __1 = require("../..");
-const GreenScreenStream_1 = require("../src/GreenScreenStream");
+const GreenScreenStream_1 = require("../../src/GreenScreenStream");
+const green_screen_method_enum_1 = require("../../src/models/green-screen-method.enum");
 document.addEventListener("DOMContentLoaded", () => {
     let customChromaKey = {
         r: 0,
         g: 0,
         b: 0
     };
-    let instance = new GreenScreenStream_1.GreenScreenStream(__1.GreenScreenMethod.VirtualBackgroundUsingGreenScreen);
-    navigator.getUserMedia({ video: { width: 800, height: 450 }, audio: false }, (m) => {
-        instance.addVideoTrack(m.getVideoTracks()[0]);
+    let instance = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackgroundUsingGreenScreen);
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then((m) => __awaiter(void 0, void 0, void 0, function* () {
+        yield instance.addVideoTrack(m.getVideoTracks()[0]);
         instance.initialize("../assets/beach.jpg").then(result => {
             const detectedColor = document.querySelector(".dominates");
             detectedColor.addEventListener("click", () => {
@@ -27,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 customChromaKey.g = d[1] / 255;
                 customChromaKey.b = d[2] / 255;
             }, 1000 * 2);
-            instance.start();
+            instance.start(25);
             document.querySelector("video").srcObject = instance.captureStream(25);
             detectedColor.addEventListener("click", () => {
                 instance.setChromaKey(customChromaKey.r, customChromaKey.g, customChromaKey.b);
@@ -36,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
             instance.stop();
             console.error(e);
         });
-    }, (e) => console.error(e));
+    }), (e) => console.error(e));
     window["_instance"] = instance;
 });
 //# sourceMappingURL=Example.js.map

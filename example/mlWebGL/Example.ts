@@ -1,6 +1,6 @@
-import { BodyPixMode } from './../../src/models/bodypixmode.enum';
-import { GreenScreenMethod } from 'dist/src/models/green-screen-method.enum';
-import { GreenScreenStream } from "dist/src/GreenScreenStream";
+import { GreenScreenStream } from "../../src/GreenScreenStream";
+import { BodyPixMode } from "../../src/models/bodypixmode.enum";
+import { GreenScreenMethod } from "../../src/models/green-screen-method.enum";
 
 let greenscreen;
 document.addEventListener("DOMContentLoaded", () => startStream(BodyPixMode.Standard));
@@ -14,9 +14,8 @@ async function startStream(quality?: BodyPixMode) {
     await greenscreen.addVideoTrack(inStream.getVideoTracks()[0]);
 
     await greenscreen.initialize(`../assets/${bgfile}`, { bodyPixMode: quality });
-    greenscreen.start();
+    greenscreen.start(60);
     const outStream = greenscreen.captureStream(60); // capture result as a MediaSteam and attacj to video element
-
     document.querySelector("video").srcObject = outStream;
     document.querySelector(".swap").classList.remove("hide");
 

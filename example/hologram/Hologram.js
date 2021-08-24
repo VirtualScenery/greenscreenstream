@@ -1,11 +1,20 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const __1 = require("../..");
 const GreenScreenStream_1 = require("../../src/GreenScreenStream");
+const green_screen_method_enum_1 = require("../../src/models/green-screen-method.enum");
 document.addEventListener("DOMContentLoaded", () => {
-    navigator.getUserMedia({ video: { width: 640, height: 360 }, audio: false }, (mediaStream) => {
-        let greenscreen = new GreenScreenStream_1.GreenScreenStream(__1.GreenScreenMethod.VirtualBackground, undefined, 640, 360);
-        greenscreen.addVideoTrack(mediaStream.getVideoTracks()[0]);
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then((mediaStream) => __awaiter(void 0, void 0, void 0, function* () {
+        let greenscreen = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackground, undefined, 640, 360);
+        yield greenscreen.addVideoTrack(mediaStream.getVideoTracks()[0]);
         // override the default shader
         greenscreen.bufferFrag = `
         uniform float time;
@@ -144,13 +153,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const fps = 60;
             // Instance.render(fps);
             // Capture the stream en send back to a video element
-            greenscreen.start();
+            greenscreen.start(25);
             const ms = greenscreen.captureStream(fps);
             document.querySelector("video").srcObject = ms;
         });
         // instance.onReady = () => {
         // }
         // // add the captured media stream ( video track )
-    }, (e) => console.error(e));
+    }), (e) => console.error(e));
 });
 //# sourceMappingURL=Hologram.js.map

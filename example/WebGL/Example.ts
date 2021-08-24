@@ -1,5 +1,6 @@
-import { GreenScreenMethod } from 'dist/src/models/green-screen-method.enum';
-import { GreenScreenStream } from "dist/src/GreenScreenStream";
+import { GreenScreenStream } from "../../src/GreenScreenStream";
+import { GreenScreenMethod } from "../../src/models/green-screen-method.enum";
+
 
 document.addEventListener("DOMContentLoaded", () => {
    
@@ -36,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 1000 * 2);
 
 
-            instance.start();
+            instance.start(25);
 
             document.querySelector("video").srcObject = instance.captureStream(25);
 

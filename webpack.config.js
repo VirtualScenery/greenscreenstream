@@ -4,18 +4,18 @@ module.exports = {
     mode:"development", 
     watch: false,
     entry: {
-      webgl: './dist/example/WebGL/Example.js',
-      mlwebgl:'./dist/example/mlWebGL/Example.js',
-      hologram: './dist/example/hologram/Hologram.js', 
-      procedual: './dist/example/procedual/Procedual.js'
+      webgl: './example/WebGL/Example.js',
+      mlwebgl:'./example/mlWebGL/Example.js',
+      hologram: './example/hologram/Hologram.js', 
+      procedual: './example/procedual/Procedual.js'
     },    
     output: {
       path: __dirname + '/example/build',
       filename: '[name]-bundle.js'
     },
-    resolve: {
-      modules: [path.resolve(__dirname, './'), 'node_modules']
-    },
+    // resolve: {
+    //   modules: [path.resolve(__dirname, './'), 'node_modules']
+    // },
     module: {
     }
   }

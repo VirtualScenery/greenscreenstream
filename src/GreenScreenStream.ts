@@ -18,7 +18,9 @@ import { asyncCall } from './utils/async-call.util';
 
 export class GreenScreenStream {
     isRendering: boolean;
+    frame: number = -1;
     rafId: number;
+    startTime: number = null;
     opacity: any;
     flipHorizontal: any;
     maskBlurAmount: any;
@@ -43,21 +45,21 @@ export class GreenScreenStream {
     bufferVert: string = BUFFER_VERT;
 
     bufferFrag: string = BUFFER_FRAG;
+    maxFps: number;
 
-    constructor(public greenScreenMethod: GreenScreenMethod, public canvas?: HTMLCanvasElement, width: number = 640, height: number = 360) {
+    canvas:HTMLCanvasElement | OffscreenCanvas;
+    offscreen : OffscreenCanvas;
+
+    constructor(public greenScreenMethod: GreenScreenMethod, public canvasEl?: HTMLCanvasElement, width: number = 640, height: number = 360) {
         this.mediaStream = new MediaStream();
-
-        if (canvas)
-            this.canvas = canvas;
-
+        if (canvasEl){
+            this.canvas =  canvasEl
+        }
         else {
             this.canvas = document.createElement("canvas") as HTMLCanvasElement;
-            this.canvas.width = width;
-            this.canvas.height = height;
-        }
-
+        }       
         if (greenScreenMethod !== GreenScreenMethod.VirtualBackgroundUsingGreenScreen)
-            this.useML = true;
+                this.useML = true;
     }
 
     /**
@@ -70,7 +72,6 @@ export class GreenScreenStream {
     setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error> {
         return new Promise<any>((resolve, reject) => {
             const isImage = src.match(/\.(jpeg|jpg|png)$/) !== null;
-
             if (isImage) {
                 const bg = new Image();
                 bg.onerror = () => {
@@ -96,8 +97,6 @@ export class GreenScreenStream {
             }
         });
     }
-
-
     /**
      * Set up the rendering, texturesx etc.
      *
@@ -107,9 +106,7 @@ export class GreenScreenStream {
      * @memberof GreenScreenStream
      */
     private setupRenderer(backgroundUrl: string): Promise<boolean | Error> {
-
         return new Promise<boolean | Error>(async (resolve, reject) => {
-
             this.ctx = this.canvas.getContext("webgl2");
             await this.setBackground(backgroundUrl).catch(err => {
                 reject(err);
@@ -125,7 +122,7 @@ export class GreenScreenStream {
     }
 
     /**
-     * Get the necessary texturesettings
+     * Get the necessary texture settings
      */
     private getTextureSettings(): TextureSettings {
         return {
@@ -160,10 +157,9 @@ export class GreenScreenStream {
      * @param textureSettings
      */
     private prepareRenderer(textureSettings: TextureSettings): Promise<boolean | Error> {
-        return new Promise<boolean | Error>( async(resolve, reject) => {
+        return new Promise<boolean | Error>(async (resolve, reject) => {
             try {
-
-                this.demolished = new DR(this.canvas, this.mainVert, this.mainFrag);
+                this.demolished = new DR(this.canvas as any, this.mainVert, this.mainFrag);
                 this.demolished.aA(
                     textureSettings
                     , () => {
@@ -259,26 +255,24 @@ export class GreenScreenStream {
             dominant: this.dominant(imageData, pixels)
         }
     }
-
     /**
      * Start render
      *
+     * @param {number} [maxFps] maximum frame rate, defaults to 60fps
      * @memberof GreenScreenStream
      */
-    start() {
+    start(maxFps?: number) {
+        this.maxFps = maxFps || 60;
         this.isRendering = true;
         const canvas = document.createElement("canvas"); //need to declare it here because of scope
-
         switch (this.greenScreenMethod) {
             case GreenScreenMethod.VirtualBackgroundUsingGreenScreen:
                 this.renderVirtualBackgroundGreenScreen(0);
                 break;
-
             case GreenScreenMethod.VirtualBackground:
                 this.cameraSource = canvas;
                 this.renderVirtualBackground(0);
                 break;
-
             case GreenScreenMethod.Mask:
                 const ctx = canvas.getContext("2d");
                 this.renderMask(0, ctx);
@@ -287,41 +281,55 @@ export class GreenScreenStream {
     }
 
     /**
-     * Renders a virtual background using a greenscreen
-     * @param t 
-     */
+    * Renders a virtual background using a greenscreen
+    * @param t 
+    */
     private renderVirtualBackgroundGreenScreen(t: number): void {
         if (!this.isRendering)
             return;
-        this.rafId = requestAnimationFrame(() => this.renderVirtualBackgroundGreenScreen(t));
-        this.demolished.R(t / 1000)
+        if (this.startTime == null) this.startTime = t;
+        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+        if (seg > this.frame) {
+            this.frame = seg;
+            this.demolished.R(t / 1000)
+        }
+        this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackgroundGreenScreen(ts));
     }
-
     /**
      * Renders a virtual background using ML
      * @param t 
      */
+    
     private async renderVirtualBackground(t: number): Promise<void> {
         if (!this.isRendering)
-            return;
+            return;        
+        if (this.startTime == null) this.startTime = t;
+        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+        if (seg > this.frame) {
+            const { error, result } = await asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
+            if (error)
+                return console.error(error);            
+        //    console.time("bodyPix toMask")
+            const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
 
-        const { error, result } = await asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
-        if (error)
-            return console.error(error);
+            bodyPix.drawMask(
+                this.cameraSource,
+                this.sourceVideo,
+                maskedImage,
+                this.opacity,
+                this.maskBlurAmount,
+                this.flipHorizontal
+            );
 
-        const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
-
-        bodyPix.drawMask(
-            this.cameraSource,
-            this.sourceVideo,
-            maskedImage,
-            this.opacity,
-            this.maskBlurAmount,
-            this.flipHorizontal
-        );
-
+    
+            this.frame = seg;
+            this.demolished.R(t / 1000);
+    
+            // console.timeLog("bodyPix toMask");
+            // console.timeEnd("bodyPix toMask");
+        
+        }
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
-        this.demolished.R(t / 1000)
     }
 
     /**
@@ -332,17 +340,19 @@ export class GreenScreenStream {
     private async renderMask(t: number, ctx: CanvasRenderingContext2D): Promise<void> {
         if (!this.isRendering)
             return;
+        if (this.startTime == null) this.startTime = t;
+        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+        if (seg > this.frame) {
+            const { error, result } = await asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
+            if (error)
+                return console.error(error);
 
-        const { error, result } = await asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
-        if (error)
-            return console.error(error);
-
-        const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
-        ctx.putImageData(maskedImage, 0, 0);
+            const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
+            ctx.putImageData(maskedImage, 0, 0);
+            this.demolished.R(t / 1000);
+        }
         this.rafId = requestAnimationFrame((ts) => this.renderMask(ts, ctx));
-        this.demolished.R(t / 1000);
     }
-
     /**
      * Stop renderer 
      * @param {boolean} [stopMediaStreams] 
@@ -358,6 +368,8 @@ export class GreenScreenStream {
             });
             this.ctx = null;
         }
+        this.startTime = null;
+        this.frame = -1;
     }
 
     /**
@@ -417,11 +429,8 @@ export class GreenScreenStream {
         const model = await asyncCall(this.loadBodyPixModel(config));
         if (model.error)
             throw model.error;
-
-        console.log(model.result);
-        this.model = model.result;
+            this.model = model.result;
     }
-
     /**
      * Sets up the bodypix model either via custom config or a preset.
      * If neither is provided, a default config is used.
@@ -436,9 +445,7 @@ export class GreenScreenStream {
         }
         else {
             bodyPixMode = getBodyPixMode(config?.bodyPixMode);
-
         }
-
         return bodyPix.load(bodyPixMode);
     }
 
@@ -446,21 +453,28 @@ export class GreenScreenStream {
      * Add a MediaStreamTrack track (i.e webcam )
      *
      * @param {MediaStreamTrack} track
+     * @return {*}  {Promise<void|any>}
      * @memberof GreenScreenStream
      */
-    addVideoTrack(track: MediaStreamTrack) {
+    addVideoTrack(track: MediaStreamTrack): Promise<void | any> {
         return new Promise<void>((resolve, reject) => {
-            this.mediaStream.addTrack(track);
-            this.sourceVideo = document.createElement("video") as HTMLVideoElement;
-
-            this.sourceVideo.width = this.canvas.width, this.sourceVideo.height = this.canvas.height;
-            this.sourceVideo.autoplay = true;
-            this.sourceVideo.srcObject = this.mediaStream;
-            
-            this.sourceVideo.onloadeddata = ()=> {
-                this.sourceVideo.play();
-                this.cameraSource = this.sourceVideo;
-                resolve();
+            try {
+                this.mediaStream.addTrack(track);
+                this.sourceVideo = document.createElement("video") as HTMLVideoElement;
+                this.sourceVideo.width = this.canvas.width, this.sourceVideo.height = this.canvas.height;
+                this.sourceVideo.autoplay = true;
+                this.sourceVideo.srcObject = this.mediaStream;
+                this.sourceVideo.onloadeddata = () => {
+                    this.sourceVideo.play();
+                    this.cameraSource = this.sourceVideo;
+                    resolve();
+                }
+                this.sourceVideo.onerror = (err) => {
+                    reject(err);
+                }
+            }
+            catch (error) {
+                reject(error)
             }
         })
     }
@@ -472,13 +486,15 @@ export class GreenScreenStream {
      * @memberof GreenScreenStream
      */
     captureStream(fps?: number): MediaStream {
-        return this.canvas["captureStream"](fps || 25) as MediaStream;
+        try {
+            return this.canvas["captureStream"](fps || 25) as MediaStream;      
+        } catch (error) {
+                throw error;
+        }              
     }
-
-
+    
     private pixelArray(pixels: any, pixelCount: number, quality: number): Array<number> {
         const pixelArray = [];
-
         for (let i = 0, offset, r, g, b, a; i < pixelCount; i = i + quality) {
             offset = i * 4;
             r = pixels[offset + 0];
