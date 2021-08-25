@@ -33,7 +33,6 @@ export declare class GreenScreenStream {
     maxFps: number;
     canvas: HTMLCanvasElement | OffscreenCanvas;
     offscreen: OffscreenCanvas;
-    currentRenderTime: number;
     constructor(greenScreenMethod: GreenScreenMethod, canvasEl?: HTMLCanvasElement, width?: number, height?: number);
     /**
      * Set the background
@@ -140,9 +139,10 @@ export declare class GreenScreenStream {
      * Add a MediaStreamTrack track (i.e webcam )
      *
      * @param {MediaStreamTrack} track
+     * @return {*}  {Promise<void|any>}
      * @memberof GreenScreenStream
      */
-    addVideoTrack(track: MediaStreamTrack): Promise<void>;
+    addVideoTrack(track: MediaStreamTrack): Promise<void | any>;
     /**
      * Capture the rendered result to a MediaStream
      *

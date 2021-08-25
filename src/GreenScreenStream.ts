@@ -58,6 +58,9 @@ export class GreenScreenStream {
         else {
             this.canvas = document.createElement("canvas") as HTMLCanvasElement;
         }       
+
+        this.canvas.width = width; this.canvas.height = height;
+
         if (greenScreenMethod !== GreenScreenMethod.VirtualBackgroundUsingGreenScreen)
                 this.useML = true;
     }

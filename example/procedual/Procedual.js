@@ -17,15 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then((mediaStream) => __awaiter(void 0, void 0, void 0, function* () {
         const track = mediaStream.getVideoTracks()[0];
         const cap = { w: track.getCapabilities().width, h: track.getConstraints().height };
-        const target = document.querySelector("canvas");
-        let greenscreen = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackground, target, cap.w, cap.h);
+        let greenscreen = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackground, null, 640, 360);
         window["__instance"] = greenscreen;
         yield greenscreen.addVideoTrack(track);
         // override the default shader
         greenscreen.bufferFrag = fractal_1.FRACTAL;
         greenscreen.initialize(`../assets/iChannel0.png`).then(state => {
             greenscreen.start(60);
-            console.log("Starting");
+            const ms = greenscreen.captureStream(60);
+            document.querySelector("video").srcObject = ms;
         }).catch(e => {
             greenscreen.stop();
             console.error(e);

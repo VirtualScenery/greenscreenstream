@@ -13,8 +13,9 @@ const GreenScreenStream_1 = require("../../src/GreenScreenStream");
 const green_screen_method_enum_1 = require("../../src/models/green-screen-method.enum");
 document.addEventListener("DOMContentLoaded", () => {
     navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then((mediaStream) => __awaiter(void 0, void 0, void 0, function* () {
-        let greenscreen = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackground, undefined, 640, 360);
-        yield greenscreen.addVideoTrack(mediaStream.getVideoTracks()[0]);
+        const track = mediaStream.getVideoTracks()[0];
+        let greenscreen = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackground, null, 640, 360);
+        yield greenscreen.addVideoTrack(track);
         // override the default shader
         greenscreen.bufferFrag = `
         uniform float time;

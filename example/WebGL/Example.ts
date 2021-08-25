@@ -10,11 +10,15 @@ document.addEventListener("DOMContentLoaded", () => {
         b: 0
     }
 
-    let instance = new GreenScreenStream(GreenScreenMethod.VirtualBackgroundUsingGreenScreen);
  
-    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then( async(m: MediaStream) => {
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then( async(mediaStream: MediaStream) => {
 
-        await instance.addVideoTrack(m.getVideoTracks()[0]);
+        const track = mediaStream.getVideoTracks()[0];
+
+        
+        let instance = new GreenScreenStream(GreenScreenMethod.VirtualBackgroundUsingGreenScreen,null,640,360);
+
+        await instance.addVideoTrack(track);
 
         instance.initialize("../assets/beach.jpg").then(result => {
             const detectedColor = document.querySelector(".dominates") as HTMLElement;
@@ -52,12 +56,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
-
     }, (e) => console.error(e));
 
 
 
-    window["_instance"] = instance;
-
+   
 });

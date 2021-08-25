@@ -17,9 +17,10 @@ document.addEventListener("DOMContentLoaded", () => startStream(bodypixmode_enum
 function startStream(quality) {
     return __awaiter(this, void 0, void 0, function* () {
         const bgfile = location.hash.length > 0 ? location.hash.replace("#", "") : "beach.jpg";
-        const inStream = yield navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
-        greenscreen = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackground, null, 1280, 720);
-        yield greenscreen.addVideoTrack(inStream.getVideoTracks()[0]);
+        const inStream = yield navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false });
+        const track = inStream.getVideoTracks()[0];
+        greenscreen = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackground, null, 640, 360);
+        yield greenscreen.addVideoTrack(track);
         yield greenscreen.initialize(`../assets/${bgfile}`, { bodyPixMode: quality });
         greenscreen.start(60);
         const outStream = greenscreen.captureStream(60); // capture result as a MediaSteam and attacj to video element

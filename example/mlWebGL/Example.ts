@@ -7,11 +7,12 @@ document.addEventListener("DOMContentLoaded", () => startStream(BodyPixMode.Stan
 
 async function startStream(quality?: BodyPixMode) {
     const bgfile = location.hash.length > 0 ? location.hash.replace("#", "") : "beach.jpg";
-    const inStream: MediaStream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
+    const inStream: MediaStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false });
+    const track = inStream.getVideoTracks()[0];
 
-    greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground, null, 1280, 720);
 
-    await greenscreen.addVideoTrack(inStream.getVideoTracks()[0]);
+    greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground, null, 640,360);
+    await greenscreen.addVideoTrack(track);
 
     await greenscreen.initialize(`../assets/${bgfile}`, { bodyPixMode: quality });
     greenscreen.start(60);

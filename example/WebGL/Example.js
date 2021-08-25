@@ -17,9 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
         g: 0,
         b: 0
     };
-    let instance = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackgroundUsingGreenScreen);
-    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then((m) => __awaiter(void 0, void 0, void 0, function* () {
-        yield instance.addVideoTrack(m.getVideoTracks()[0]);
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then((mediaStream) => __awaiter(void 0, void 0, void 0, function* () {
+        const track = mediaStream.getVideoTracks()[0];
+        let instance = new GreenScreenStream_1.GreenScreenStream(green_screen_method_enum_1.GreenScreenMethod.VirtualBackgroundUsingGreenScreen, null, 640, 360);
+        yield instance.addVideoTrack(track);
         instance.initialize("../assets/beach.jpg").then(result => {
             const detectedColor = document.querySelector(".dominates");
             detectedColor.addEventListener("click", () => {
@@ -46,6 +47,5 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error(e);
         });
     }), (e) => console.error(e));
-    window["_instance"] = instance;
 });
 //# sourceMappingURL=Example.js.map
