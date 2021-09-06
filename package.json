@@ -30,17 +30,17 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@tensorflow-models/body-pix": "^2.1.0",
-    "@tensorflow/tfjs": "^3.2.0",
-    "@tensorflow/tfjs-backend-cpu": "^3.2.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.2.0",
+    "@tensorflow-models/body-pix": "^2.2.0",
+    "@tensorflow/tfjs": "^3.9.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.9.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.9.0",
     "@types/webgl2": "0.0.5",
-    "demolishedrenderer": "^2.2.3",
+    "demolishedrenderer": "^3.0.0",
     "quantize": "^1.0.2"
   },
   "devDependencies": {
     "raw-loader": "^4.0.2",
-    "webpack": "^5.42.0",
-    "webpack-cli": "^4.7.2"
+    "webpack": "^5.52.0",
+    "webpack-cli": "^4.8.0"
   }
 }

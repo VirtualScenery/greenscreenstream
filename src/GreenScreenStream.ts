@@ -26,7 +26,7 @@ export class GreenScreenStream {
     maskBlurAmount: any;
     foregroundColor: any;
     backgroundColor: any;
-    ctx: WebGL2RenderingContext;
+    ctx: any;
     demolished: DR;
     mediaStream: MediaStream;
     model: any;
@@ -130,7 +130,7 @@ export class GreenScreenStream {
     private getTextureSettings(): TextureSettings {
         return {
             "background": {
-                unit: 33985,
+                //unit: 33985,
                 fn: (_prg: WebGLProgram, gl: WebGLRenderingContext, texture: WebGLTexture) => {
                     gl.bindTexture(gl.TEXTURE_2D, texture);
                     gl.texImage2D(3553, 0, 6408, 6408, 5121, this.backgroundSource);
@@ -141,7 +141,7 @@ export class GreenScreenStream {
                 }
             },
             "webcam": {
-                unit: 33986,
+                //unit: 33986,
                 fn: (_prg: WebGLProgram, gl: WebGLRenderingContext, texture: WebGLTexture) => {
                     gl.bindTexture(gl.TEXTURE_2D, texture);
                     gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);

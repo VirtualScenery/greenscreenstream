@@ -15,7 +15,7 @@ export declare class GreenScreenStream {
     maskBlurAmount: any;
     foregroundColor: any;
     backgroundColor: any;
-    ctx: WebGL2RenderingContext;
+    ctx: any;
     demolished: DR;
     mediaStream: MediaStream;
     model: any;

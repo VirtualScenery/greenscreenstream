@@ -1,11 +1,11 @@
 
 export type TextureSettings = {
     background: {
-        unit: number,
+        //unit: number,
         fn: Function
     }
     webcam: {
-        unit: number,
+        //unit: number,
         fn: Function
     }
 }

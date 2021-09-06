@@ -109,7 +109,7 @@ class GreenScreenStream {
     getTextureSettings() {
         return {
             "background": {
-                unit: 33985,
+                //unit: 33985,
                 fn: (_prg, gl, texture) => {
                     gl.bindTexture(gl.TEXTURE_2D, texture);
                     gl.texImage2D(3553, 0, 6408, 6408, 5121, this.backgroundSource);
@@ -120,7 +120,7 @@ class GreenScreenStream {
                 }
             },
             "webcam": {
-                unit: 33986,
+                //unit: 33986,
                 fn: (_prg, gl, texture) => {
                     gl.bindTexture(gl.TEXTURE_2D, texture);
                     gl.texImage2D(3553, 0, 6408, 6408, 5121, this.cameraSource);
