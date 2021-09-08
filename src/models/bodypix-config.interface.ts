@@ -1,4 +1,4 @@
-export interface BodyPixConfig {
+export interface IBodyPixConfig {
     architecture: string;
     outputStride: number;
     multiplier?: number;

@@ -204,11 +204,11 @@ class GreenScreenStream {
     /**
      * Start render
      *
-     * @param {number} [maxFps] maximum frame rate, defaults to 60fps
+     * @param {number} [maxFps] maximum frame rate, defaults to 25fps
      * @memberof GreenScreenStream
      */
     start(maxFps) {
-        this.maxFps = maxFps || 60;
+        this.maxFps = maxFps || 25;
         this.isRendering = true;
         const canvas = document.createElement("canvas"); //need to declare it here because of scope
         switch (this.greenScreenMethod) {
