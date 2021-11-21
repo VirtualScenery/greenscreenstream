@@ -8,7 +8,7 @@ import '@tensorflow/tfjs-backend-cpu'
 import { dispose } from '@tensorflow/tfjs-core';
 
 import { GreenScreenConfig } from './models/green-screen-config.interface';
-import { MaskSettings } from './models/masksettings.interface';
+import { DEFAULT_MASK_SETTINGS, MaskSettings } from './models/masksettings.interface';
 import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
 import { TextureSettings } from './models/texturesettings.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
@@ -51,15 +51,18 @@ export class GreenScreenStream {
     offscreen : OffscreenCanvas;
     modelLoaded: boolean;
 
-    constructor(public greenScreenMethod: GreenScreenMethod, public canvasEl?: HTMLCanvasElement, width: number = 640, height: number = 360) {
+    constructor(
+        public greenScreenMethod: GreenScreenMethod, 
+        public canvasEl?: HTMLCanvasElement, 
+        width: number = 640,
+        height: number = 360
+    ) {
         this.mediaStream = new MediaStream();
-        if (canvasEl){
+        if (canvasEl)
             this.canvas =  canvasEl
-        }
-        else {
+        else 
             this.canvas = document.createElement("canvas") as HTMLCanvasElement;
-        }       
-
+   
         this.canvas.width = width; this.canvas.height = height;
 
         if (greenScreenMethod !== GreenScreenMethod.VirtualBackgroundUsingGreenScreen)
@@ -268,7 +271,7 @@ export class GreenScreenStream {
     start(maxFps?: number) {
         this.maxFps = maxFps || 60;
         this.isRendering = true;
-        const canvas = document.createElement("canvas"); //need to declare it here because of scope
+        const canvas = document.createElement("canvas");
         switch (this.greenScreenMethod) {
             case GreenScreenMethod.VirtualBackgroundUsingGreenScreen:
                 this.renderVirtualBackgroundGreenScreen(0);
@@ -325,13 +328,11 @@ export class GreenScreenStream {
                 this.flipHorizontal
             );
 
-    
             this.frame = seg;
             this.demolished.R(t / 1000);
     
             // console.timeLog("bodyPix toMask");
             // console.timeEnd("bodyPix toMask");
-        
         }
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
     }
@@ -410,30 +411,31 @@ export class GreenScreenStream {
     }
 
     /**
-     * Applies the passed config or sets up a standard config when no config is provided on initialization
+     * Applies the passed config or sets up a standard config when no config is provided
      */
     private setConfig(config?: MaskSettings): void {
-        this.opacity = config?.opacity || 1.0;
-        this.flipHorizontal = config?.flipHorizontal || true
-        this.maskBlurAmount = config?.maskBlurAmount || 3;
-        this.foregroundColor = config?.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
-        this.backgroundColor = config?.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
+        const defaults = DEFAULT_MASK_SETTINGS;
+        this.opacity = config?.opacity || defaults.opacity;
+        this.flipHorizontal = config?.flipHorizontal || defaults.flipHorizontal;
+        this.maskBlurAmount = config?.maskBlurAmount || defaults.maskBlurAmount;
+        this.foregroundColor = config?.foregroundColor || defaults.foregroundColor;
+        this.backgroundColor = config?.backgroundColor || defaults.backgroundColor;
 
         this.segmentConfig = {
-            flipHorizontal: config?.segmentPerson.flipHorizontal || true,
-            internalResolution: config?.segmentPerson.internalResolution || 'medium',
-            segmentationThreshold: config?.segmentPerson.segmentationThreshold || 0.7,
-            maxDetections: config?.segmentPerson.maxDetections || 1,
-            quantBytes: config?.segmentPerson.quantBytes || 2
+            flipHorizontal: config?.segmentPerson.flipHorizontal || defaults.segmentPerson.flipHorizontal,
+            internalResolution: config?.segmentPerson.internalResolution || defaults.segmentPerson.internalResolution,
+            segmentationThreshold: config?.segmentPerson.segmentationThreshold || defaults.segmentPerson.segmentationThreshold,
+            maxDetections: config?.segmentPerson.maxDetections || defaults.segmentPerson.maxDetections,
+            quantBytes: config?.segmentPerson.quantBytes || defaults.segmentPerson.quantBytes
         };
-        console.log(this.segmentConfig)
     }
 
     public async setBodyPixModel(config: GreenScreenConfig) {
         const model = await asyncCall(this.loadBodyPixModel(config));
         if (model.error)
             throw model.error;
-            this.model = model.result;
+
+        this.model = model.result;
     }
     /**
      * Sets up the bodypix model either via custom config or a preset (mode).
@@ -447,7 +449,7 @@ export class GreenScreenStream {
             bodyPixMode = config?.bodyPixConfig;
         else
             bodyPixMode = getBodyPixMode(config?.bodyPixMode);
-            
+
         if(this.modelLoaded)
             dispose(bodyPix);
 
@@ -466,15 +468,18 @@ export class GreenScreenStream {
         return new Promise<void>((resolve, reject) => {
             try {
                 this.mediaStream.addTrack(track);
-                this.sourceVideo = document.createElement("video") as HTMLVideoElement;
-                this.sourceVideo.width = this.canvas.width, this.sourceVideo.height = this.canvas.height;
+                this.sourceVideo = document.createElement("video");
+                this.sourceVideo.width = this.canvas.width;
+                this.sourceVideo.height = this.canvas.height;
                 this.sourceVideo.autoplay = true;
                 this.sourceVideo.srcObject = this.mediaStream;
+
                 this.sourceVideo.onloadeddata = () => {
                     this.sourceVideo.play();
                     this.cameraSource = this.sourceVideo;
                     resolve();
                 }
+
                 this.sourceVideo.onerror = (err) => {
                     reject(err);
                 }
