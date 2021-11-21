@@ -253,7 +253,7 @@ class GreenScreenStream {
                 this.startTime = t;
             let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
             if (seg > this.frame) {
-                const { error, result } = yield async_call_util_1.asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
+                const { error, result } = yield (0, async_call_util_1.asyncCall)(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
                 if (error)
                     return console.error(error);
                 //    console.time("bodyPix toMask")
@@ -280,7 +280,7 @@ class GreenScreenStream {
                 this.startTime = t;
             let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
             if (seg > this.frame) {
-                const { error, result } = yield async_call_util_1.asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
+                const { error, result } = yield (0, async_call_util_1.asyncCall)(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
                 if (error)
                     return console.error(error);
                 const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
@@ -318,14 +318,14 @@ class GreenScreenStream {
     initialize(backgroundUrl, config) {
         this.setConfig(config === null || config === void 0 ? void 0 : config.maskSettings);
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            let result = yield async_call_util_1.asyncCall(this.setupRenderer(backgroundUrl));
+            let result = yield (0, async_call_util_1.asyncCall)(this.setupRenderer(backgroundUrl));
             if (result.error)
                 reject(result.error);
             if (!this.demolished)
                 reject(`No renderer created. Background source must be provided.`);
             if (!this.useML)
                 resolve(this);
-            const model = yield async_call_util_1.asyncCall(this.loadBodyPixModel(config));
+            const model = yield (0, async_call_util_1.asyncCall)(this.loadBodyPixModel(config));
             if (model.error)
                 reject(model.error);
             console.log(model.result);
@@ -353,7 +353,7 @@ class GreenScreenStream {
     }
     setBodyPixModel(config) {
         return __awaiter(this, void 0, void 0, function* () {
-            const model = yield async_call_util_1.asyncCall(this.loadBodyPixModel(config));
+            const model = yield (0, async_call_util_1.asyncCall)(this.loadBodyPixModel(config));
             if (model.error)
                 throw model.error;
             this.model = model.result;
@@ -373,7 +373,7 @@ class GreenScreenStream {
                 console.log("No config found. Fallining back to mode");
             }
             else {
-                bodyPixMode = get_bodypix_mode_util_1.getBodyPixMode(config === null || config === void 0 ? void 0 : config.bodyPixMode);
+                bodyPixMode = (0, get_bodypix_mode_util_1.getBodyPixMode)(config === null || config === void 0 ? void 0 : config.bodyPixMode);
             }
             return bodyPix.load(bodyPixMode);
         });
@@ -462,7 +462,7 @@ class GreenScreenStream {
      */
     pallette(imageData, pixelCount) {
         const pixelArray = this.pixelArray(imageData.data, pixelCount, 10);
-        const cmap = quantize_1.default(pixelArray, 8);
+        const cmap = (0, quantize_1.default)(pixelArray, 8);
         const palette = cmap ? cmap.palette() : null;
         return palette;
     }

@@ -5,7 +5,7 @@ import quantize from 'quantize'
 const bodyPix = require('@tensorflow-models/body-pix');
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
-import { getBackend } from '@tensorflow/tfjs';
+import { dispose } from '@tensorflow/tfjs-core';
 
 import { GreenScreenConfig } from './models/green-screen-config.interface';
 import { MaskSettings } from './models/masksettings.interface';
@@ -49,6 +49,7 @@ export class GreenScreenStream {
 
     canvas:HTMLCanvasElement | OffscreenCanvas;
     offscreen : OffscreenCanvas;
+    modelLoaded: boolean;
 
     constructor(public greenScreenMethod: GreenScreenMethod, public canvasEl?: HTMLCanvasElement, width: number = 640, height: number = 360) {
         this.mediaStream = new MediaStream();
@@ -435,20 +436,22 @@ export class GreenScreenStream {
             this.model = model.result;
     }
     /**
-     * Sets up the bodypix model either via custom config or a preset.
+     * Sets up the bodypix model either via custom config or a preset (mode).
      * If neither is provided, a default config is used.
      * @param config 
      */
     private async loadBodyPixModel(config: GreenScreenConfig) {
         let bodyPixMode: BodyPixConfig;
-        console.log(config)
-        if (config?.bodyPixConfig) {
+
+        if (config?.bodyPixConfig)
             bodyPixMode = config?.bodyPixConfig;
-            console.log("No config found. Fallining back to mode")
-        }
-        else {
+        else
             bodyPixMode = getBodyPixMode(config?.bodyPixMode);
-        }
+            
+        if(this.modelLoaded)
+            dispose(bodyPix);
+
+        this.modelLoaded = true;
         return bodyPix.load(bodyPixMode);
     }
 
