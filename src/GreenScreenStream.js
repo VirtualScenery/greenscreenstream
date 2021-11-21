@@ -204,11 +204,11 @@ class GreenScreenStream {
     /**
      * Start render
      *
-     * @param {number} [maxFps] maximum frame rate, defaults to 60fps
+     * @param {number} [maxFps] maximum frame rate, defaults to 25fps
      * @memberof GreenScreenStream
      */
     start(maxFps) {
-        this.maxFps = maxFps || 60;
+        this.maxFps = maxFps || 25;
         this.isRendering = true;
         const canvas = document.createElement("canvas"); //need to declare it here because of scope
         switch (this.greenScreenMethod) {
@@ -261,8 +261,6 @@ class GreenScreenStream {
                 bodyPix.drawMask(this.cameraSource, this.sourceVideo, maskedImage, this.opacity, this.maskBlurAmount, this.flipHorizontal);
                 this.frame = seg;
                 this.demolished.R(t / 1000);
-                // console.timeLog("bodyPix toMask");
-                // console.timeEnd("bodyPix toMask");
             }
             this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
         });
@@ -351,6 +349,12 @@ class GreenScreenStream {
         };
         console.log(this.segmentConfig);
     }
+    /**
+     *
+     *
+     * @param {IGreenScreenConfig} config
+     * @memberof GreenScreenStream
+     */
     setBodyPixModel(config) {
         return __awaiter(this, void 0, void 0, function* () {
             const model = yield async_call_util_1.asyncCall(this.loadBodyPixModel(config));

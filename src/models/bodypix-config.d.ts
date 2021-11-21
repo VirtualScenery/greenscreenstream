@@ -1,5 +1,5 @@
-import { BodyPixConfig } from "./bodypix-config.interface";
-export declare const bodyPixFast: BodyPixConfig;
-export declare const bodyPixStandard: BodyPixConfig;
-export declare const bodyPixPrecise: BodyPixConfig;
-export declare const bodyPixMaximum: BodyPixConfig;
+import { IBodyPixConfig } from "./bodypix-config.interface";
+export declare const bodyPixFast: IBodyPixConfig;
+export declare const bodyPixStandard: IBodyPixConfig;
+export declare const bodyPixPrecise: IBodyPixConfig;
+export declare const bodyPixMaximum: IBodyPixConfig;

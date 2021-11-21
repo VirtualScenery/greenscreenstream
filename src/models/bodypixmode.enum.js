@@ -1,14 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BodyPixMode = void 0;
+exports.GreenScreenStreamBodyPixMode = void 0;
 /**
  * The accuracy mode of the AI person segmenting.
  */
-var BodyPixMode;
-(function (BodyPixMode) {
-    BodyPixMode[BodyPixMode["Fast"] = 0] = "Fast";
-    BodyPixMode[BodyPixMode["Standard"] = 1] = "Standard";
-    BodyPixMode[BodyPixMode["Precise"] = 2] = "Precise";
-    BodyPixMode[BodyPixMode["Maximum"] = 3] = "Maximum";
-})(BodyPixMode = exports.BodyPixMode || (exports.BodyPixMode = {}));
+var GreenScreenStreamBodyPixMode;
+(function (GreenScreenStreamBodyPixMode) {
+    GreenScreenStreamBodyPixMode[GreenScreenStreamBodyPixMode["Fast"] = 0] = "Fast";
+    GreenScreenStreamBodyPixMode[GreenScreenStreamBodyPixMode["Standard"] = 1] = "Standard";
+    GreenScreenStreamBodyPixMode[GreenScreenStreamBodyPixMode["Precise"] = 2] = "Precise";
+    GreenScreenStreamBodyPixMode[GreenScreenStreamBodyPixMode["Maximum"] = 3] = "Maximum";
+})(GreenScreenStreamBodyPixMode = exports.GreenScreenStreamBodyPixMode || (exports.GreenScreenStreamBodyPixMode = {}));
 //# sourceMappingURL=bodypixmode.enum.js.map
