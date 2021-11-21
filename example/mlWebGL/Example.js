@@ -13,7 +13,7 @@ const GreenScreenStream_1 = require("../../src/GreenScreenStream");
 const bodypixmode_enum_1 = require("../../src/models/bodypixmode.enum");
 const green_screen_method_enum_1 = require("../../src/models/green-screen-method.enum");
 let greenscreen;
-document.addEventListener("DOMContentLoaded", () => startStream(bodypixmode_enum_1.BodyPixMode.Standard));
+document.addEventListener("DOMContentLoaded", () => startStream(bodypixmode_enum_1.GreenScreenStreamBodyPixMode.Standard));
 function startStream(quality) {
     return __awaiter(this, void 0, void 0, function* () {
         const bgfile = location.hash.length > 0 ? location.hash.replace("#", "") : "beach.jpg";
