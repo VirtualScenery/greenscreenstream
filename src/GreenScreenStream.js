@@ -34,10 +34,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GreenScreenStream = void 0;
 const demolishedrenderer_1 = require("demolishedrenderer");
 const quantize_1 = __importDefault(require("quantize"));
-const body_pix_1 = require("@tensorflow-models/body-pix");
-const BODY_PIX = __importStar(require("@tensorflow-models/body-pix"));
 require("@tensorflow/tfjs-backend-webgl");
 require("@tensorflow/tfjs-backend-cpu");
+const BODY_PIX = __importStar(require("@tensorflow-models/body-pix"));
+const body_pix_1 = require("@tensorflow-models/body-pix");
 const masksettings_interface_1 = require("./models/masksettings.interface");
 const glsl_constants_1 = require("./models/glsl-constants");
 const green_screen_method_enum_1 = require("./models/green-screen-method.enum");
@@ -56,10 +56,12 @@ class GreenScreenStream {
         this.bufferVert = glsl_constants_1.BUFFER_VERT;
         this.bufferFrag = glsl_constants_1.BUFFER_FRAG;
         this.mediaStream = new MediaStream();
-        if (canvasEl)
+        if (canvasEl) {
             this.canvas = canvasEl;
-        else
+        }
+        else {
             this.canvas = document.createElement("canvas");
+        }
         this.canvas.width = width;
         this.canvas.height = height;
         if (greenScreenMethod !== green_screen_method_enum_1.GreenScreenMethod.VirtualBackgroundUsingGreenScreen)
@@ -272,10 +274,7 @@ class GreenScreenStream {
                 this.startTime = t;
             const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
             if (seg > this.frame && this.modelLoaded) {
-                const { error, result } = yield (0, async_call_util_1.asyncCall)(this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig));
-                if (error)
-                    return console.error(error);
-                //    console.time("bodyPix toMask")
+                const result = yield this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
                 const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
                 BODY_PIX.drawMask(this.cameraSource, this.sourceVideo, maskedImage, this.opacity, this.maskBlurAmount, this.flipHorizontal);
                 this.frame = seg;
@@ -297,9 +296,7 @@ class GreenScreenStream {
                 this.startTime = t;
             let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
             if (seg > this.frame && this.modelLoaded) {
-                const { error, result } = yield (0, async_call_util_1.asyncCall)(this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig));
-                if (error)
-                    return console.error(error);
+                const result = yield this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
                 const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
                 ctx.putImageData(maskedImage, 0, 0);
                 this.demolished.R(t / 1000);
@@ -369,17 +366,15 @@ class GreenScreenStream {
         };
     }
     /**
-     *
-     *
-     * @param {IGreenScreenConfig} config
-     * @memberof GreenScreenStream
+     * Sets the provided BodyPixConfig or BodypixMode.
+     * Can be used while rendering to switch out the currently used config.
+     * Expect a few seconds of freezed image while the new model is loading.
+     * @param config
      */
     setBodyPixModel(config) {
         return __awaiter(this, void 0, void 0, function* () {
-            const model = yield (0, async_call_util_1.asyncCall)(this.loadBodyPixModel(config));
-            if (model.error)
-                throw model.error;
-            this.bodyPix = model.result;
+            const model = yield this.loadBodyPixModel(config);
+            this.bodyPix = model;
             this.modelLoaded = true;
         });
     }
