@@ -1,18 +1,18 @@
+export interface RGBA {
+    r: number, g: number, b: number, a: number
+}
+
 export interface MaskSettings {
-    opacity?: number,
-    flipHorizontal?: boolean,
+    opacity?: number
+    flipHorizontal?: boolean
     maskBlurAmount?: number
-    foregroundColor?: {
-        r: number, g: number, b: number, a: number
-    }
-    backgroundColor?: {
-        r: number, g: number, b: number, a: number
-    }
+    foregroundColor?: RGBA
+    backgroundColor?: RGBA
     segmentPerson?: {
-        flipHorizontal?: boolean,
+        flipHorizontal?: boolean
         internalResolution?: string
         segmentationThreshold?: number
-        maxDetections?: number,
+        maxDetections?: number
         quantBytes?: number
     }
 };

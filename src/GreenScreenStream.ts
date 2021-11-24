@@ -1,32 +1,32 @@
-
 import { DR } from 'demolishedrenderer';
 import quantize from 'quantize'
 
-import { load, BodyPix } from '@tensorflow-models/body-pix';
-import * as BODY_PIX from '@tensorflow-models/body-pix';
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
 
-import { GreenScreenConfig } from './models/green-screen-config.interface';
-import { DEFAULT_MASK_SETTINGS, MaskSettings } from './models/masksettings.interface';
+import * as BODY_PIX from '@tensorflow-models/body-pix';
+import { load, BodyPix } from '@tensorflow-models/body-pix';
+import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
+
+
+import { DEFAULT_MASK_SETTINGS, MaskSettings, RGBA } from './models/masksettings.interface';
 import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
+import { GreenScreenConfig } from './models/green-screen-config.interface';
 import { TextureSettings } from './models/texturesettings.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
-import { BodyPixConfig } from './models/bodypix-config.interface';
 import { getBodyPixMode } from './utils/get-bodypix-mode.util';
 import { asyncCall } from './utils/async-call.util';
-import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 
 export class GreenScreenStream {
     isRendering: boolean;
     frame: number = -1;
     rafId: number;
     startTime: number = null;
-    opacity: any;
-    flipHorizontal: any;
-    maskBlurAmount: any;
-    foregroundColor: any;
-    backgroundColor: any;
+    opacity: number;
+    flipHorizontal: boolean;
+    maskBlurAmount: number;
+    foregroundColor: RGBA;
+    backgroundColor: RGBA;
     ctx: any;
     demolished: DR;
     mediaStream: MediaStream;
@@ -315,10 +315,7 @@ export class GreenScreenStream {
         const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
 
         if (seg > this.frame && this.modelLoaded) {
-            const { error, result } = await asyncCall(this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig));
-            if (error)
-                return console.error(error);            
-        //    console.time("bodyPix toMask")
+            const result  = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);   
             const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
 
             BODY_PIX.drawMask(
@@ -332,9 +329,6 @@ export class GreenScreenStream {
 
             this.frame = seg;
             this.demolished.R(t / 1000);
-    
-            // console.timeLog("bodyPix toMask");
-            // console.timeEnd("bodyPix toMask");
         }
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
     }
@@ -350,11 +344,9 @@ export class GreenScreenStream {
         if (this.startTime == null) this.startTime = t;
         let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
         if (seg > this.frame && this.modelLoaded) {
-            const { error, result } = await asyncCall(this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig));
-            if (error)
-                return console.error(error);
-
+            const result = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
             const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
+
             ctx.putImageData(maskedImage, 0, 0);
             this.demolished.R(t / 1000);
         }
@@ -432,12 +424,16 @@ export class GreenScreenStream {
         };
     }
 
+    /**
+     * Sets the provided BodyPixConfig or BodypixMode.
+     * Can be used while rendering to switch out the currently used config.
+     * Expect a few seconds of freezed image while the new model is loading.
+     * @param config 
+     */
     public async setBodyPixModel(config: GreenScreenConfig) {
-        const model = await asyncCall(this.loadBodyPixModel(config));
-        if (model.error)
-            throw model.error;
+        const model = await this.loadBodyPixModel(config);
 
-        this.bodyPix = model.result;
+        this.bodyPix = model;
         this.modelLoaded = true;
     }
     /**
@@ -524,6 +520,7 @@ export class GreenScreenStream {
         }
         return pixelArray;
     }
+    
     /**
      *  Get the dominant color from the imageData provided
      *
@@ -537,6 +534,7 @@ export class GreenScreenStream {
         const d = p[0];
         return d;
     };
+
     /**
      * Get a pallette (10) of the most used colors in the imageData provided
      *
