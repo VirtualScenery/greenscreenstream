@@ -2,10 +2,10 @@
 import { DR } from 'demolishedrenderer';
 import quantize from 'quantize'
 
-const bodyPix = require('@tensorflow-models/body-pix');
+import { load, BodyPix } from '@tensorflow-models/body-pix';
+import * as BODY_PIX from '@tensorflow-models/body-pix';
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
-import { dispose } from '@tensorflow/tfjs-core';
 
 import { GreenScreenConfig } from './models/green-screen-config.interface';
 import { DEFAULT_MASK_SETTINGS, MaskSettings } from './models/masksettings.interface';
@@ -15,6 +15,7 @@ import { GreenScreenMethod } from './models/green-screen-method.enum';
 import { BodyPixConfig } from './models/bodypix-config.interface';
 import { getBodyPixMode } from './utils/get-bodypix-mode.util';
 import { asyncCall } from './utils/async-call.util';
+import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 
 export class GreenScreenStream {
     isRendering: boolean;
@@ -29,7 +30,7 @@ export class GreenScreenStream {
     ctx: any;
     demolished: DR;
     mediaStream: MediaStream;
-    model: any;
+    bodyPix: BodyPix;
     private segmentConfig: any;
     private backgroundSource: any;
     private sourceVideo: HTMLVideoElement;
@@ -295,7 +296,7 @@ export class GreenScreenStream {
         if (!this.isRendering)
             return;
         if (this.startTime == null) this.startTime = t;
-        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+        const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
         if (seg > this.frame) {
             this.frame = seg;
             this.demolished.R(t / 1000)
@@ -311,16 +312,17 @@ export class GreenScreenStream {
         if (!this.isRendering)
             return;        
         if (this.startTime == null) this.startTime = t;
-        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-        if (seg > this.frame) {
-            const { error, result } = await asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
+        const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+
+        if (seg > this.frame && this.modelLoaded) {
+            const { error, result } = await asyncCall(this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig));
             if (error)
                 return console.error(error);            
         //    console.time("bodyPix toMask")
-            const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
+            const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
 
-            bodyPix.drawMask(
-                this.cameraSource,
+            BODY_PIX.drawMask(
+                this.cameraSource as any,
                 this.sourceVideo,
                 maskedImage,
                 this.opacity,
@@ -347,12 +349,12 @@ export class GreenScreenStream {
             return;
         if (this.startTime == null) this.startTime = t;
         let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-        if (seg > this.frame) {
-            const { error, result } = await asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
+        if (seg > this.frame && this.modelLoaded) {
+            const { error, result } = await asyncCall(this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig));
             if (error)
                 return console.error(error);
 
-            const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
+            const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
             ctx.putImageData(maskedImage, 0, 0);
             this.demolished.R(t / 1000);
         }
@@ -404,8 +406,8 @@ export class GreenScreenStream {
             if (model.error)
                 reject(model.error);
 
-            console.log(model.result);
-            this.model = model.result;
+            this.bodyPix = model.result;
+            this.modelLoaded = true;
             resolve(this);
         });
     }
@@ -435,7 +437,8 @@ export class GreenScreenStream {
         if (model.error)
             throw model.error;
 
-        this.model = model.result;
+        this.bodyPix = model.result;
+        this.modelLoaded = true;
     }
     /**
      * Sets up the bodypix model either via custom config or a preset (mode).
@@ -443,18 +446,19 @@ export class GreenScreenStream {
      * @param config 
      */
     private async loadBodyPixModel(config: GreenScreenConfig) {
-        let bodyPixMode: BodyPixConfig;
+        let bodyPixMode: ModelConfig;
 
         if (config?.bodyPixConfig)
-            bodyPixMode = config?.bodyPixConfig;
+            bodyPixMode = config?.bodyPixConfig as ModelConfig;
         else
-            bodyPixMode = getBodyPixMode(config?.bodyPixMode);
+            bodyPixMode = getBodyPixMode(config?.bodyPixMode) as ModelConfig;
 
-        if(this.modelLoaded)
-            dispose(bodyPix);
+        if(this.modelLoaded) {
+            this.bodyPix.dispose();
+            this.modelLoaded = false;
+        }
 
-        this.modelLoaded = true;
-        return bodyPix.load(bodyPixMode);
+        return load(bodyPixMode);
     }
 
     /**
