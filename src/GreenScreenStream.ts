@@ -1,35 +1,35 @@
-
 import { DR } from 'demolishedrenderer';
 import quantize from 'quantize'
 
-const bodyPix = require('@tensorflow-models/body-pix');
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
-import { getBackend } from '@tensorflow/tfjs';
+import * as BODY_PIX from '@tensorflow-models/body-pix';
+import { BodyPix, load } from '@tensorflow-models/body-pix';
+
 
 import { IGreenScreenConfig } from './models/green-screen-config.interface';
-import { MaskSettings } from './models/masksettings.interface';
+import { MaskSettings, DEFAULT_MASK_SETTINGS, RGBA } from './models/masksettings.interface';
 import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
-import { TextureSettings } from './models/texturesettings.interface';
+import { ITextureSettings } from './models/texturesettings.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
-import { IBodyPixConfig } from './models/bodypix-config.interface';
 import { getBodyPixMode } from './utils/get-bodypix-mode.util';
 import { asyncCall } from './utils/async-call.util';
+import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 
 export class GreenScreenStream {
     isRendering: boolean;
     frame: number = -1;
     rafId: number;
     startTime: number = null;
-    opacity: any;
-    flipHorizontal: any;
-    maskBlurAmount: any;
-    foregroundColor: any;
-    backgroundColor: any;
-    ctx: WebGLRenderingContext | WebGL2RenderingContext;
+    opacity: number;
+    flipHorizontal: boolean;
+    maskBlurAmount: number;
+    foregroundColor: RGBA;
+    backgroundColor: RGBA;
+    ctx:  WebGLRenderingContext | WebGL2RenderingContext;
     demolished: DR;
     mediaStream: MediaStream;
-    model: any;
+    bodyPix: BodyPix;
     private segmentConfig: any;
     private backgroundSource: any;
     private sourceVideo: HTMLVideoElement;
@@ -44,6 +44,7 @@ export class GreenScreenStream {
     bufferFrag: string = BUFFER_FRAG;
     maxFps: number;
     canvas: HTMLCanvasElement
+    modelLoaded: boolean;
 
     constructor(public greenScreenMethod: GreenScreenMethod, public canvasEl?: HTMLCanvasElement, width: number = 640, height: number = 360) {
         this.mediaStream = new MediaStream();
@@ -111,7 +112,7 @@ export class GreenScreenStream {
                 reject(err);
             });
 
-            const textureSettings: TextureSettings = this.getTextureSettings();
+            const textureSettings: ITextureSettings = this.getTextureSettings();
 
             await this.prepareRenderer(textureSettings).catch(err => {
                 reject(new Error("Cannot setup renderer"))
@@ -123,7 +124,7 @@ export class GreenScreenStream {
     /**
      * Get the necessary texture settings
      */
-    private getTextureSettings(): TextureSettings {
+    private getTextureSettings(): ITextureSettings {
         return {
             "background": {
                 //unit: 33985,
@@ -155,7 +156,7 @@ export class GreenScreenStream {
      * Instantiates & prepares the demolishedRenderer 
      * @param textureSettings
      */
-    private prepareRenderer(textureSettings: TextureSettings): Promise<boolean | Error> {
+    private prepareRenderer(textureSettings: ITextureSettings): Promise<boolean | Error> {
         return new Promise<boolean | Error>(async (resolve, reject) => {
             try {
                 this.demolished = new DR(this.canvas as any, this.mainVert, this.mainFrag);
@@ -263,7 +264,7 @@ export class GreenScreenStream {
     start(maxFps?: number) {
         this.maxFps = maxFps || 25;
         this.isRendering = true;
-        const canvas = document.createElement("canvas"); //need to declare it here because of scope
+        const canvas = document.createElement("canvas");
         switch (this.greenScreenMethod) {
             case GreenScreenMethod.VirtualBackgroundUsingGreenScreen:
                 this.renderVirtualBackgroundGreenScreen(0);
@@ -287,7 +288,7 @@ export class GreenScreenStream {
         if (!this.isRendering)
             return;
         if (this.startTime == null) this.startTime = t;
-        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+        const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
         if (seg > this.frame) {
             this.frame = seg;
             this.demolished.R(t / 1000)
@@ -303,16 +304,14 @@ export class GreenScreenStream {
         if (!this.isRendering)
             return;
         if (this.startTime == null) this.startTime = t;
-        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-        if (seg > this.frame) {
-            const { error, result } = await asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
-            if (error)
-                return console.error(error);
-            //    console.time("bodyPix toMask")
-            const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
+        const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
 
-            bodyPix.drawMask(
-                this.cameraSource,
+        if (seg > this.frame && this.modelLoaded) {
+            const result  = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);   
+            const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
+
+            BODY_PIX.drawMask(
+                this.cameraSource as any,
                 this.sourceVideo,
                 maskedImage,
                 this.opacity,
@@ -336,12 +335,10 @@ export class GreenScreenStream {
             return;
         if (this.startTime == null) this.startTime = t;
         let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-        if (seg > this.frame) {
-            const { error, result } = await asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
-            if (error)
-                return console.error(error);
+        if (seg > this.frame && this.modelLoaded) {
+            const result = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
+            const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
 
-            const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
             ctx.putImageData(maskedImage, 0, 0);
             this.demolished.R(t / 1000);
         }
@@ -393,60 +390,63 @@ export class GreenScreenStream {
             if (model.error)
                 reject(model.error);
 
-            console.log(model.result);
-            this.model = model.result;
+            this.bodyPix = model.result;
+            this.modelLoaded = true;
             resolve(this);
         });
     }
 
     /**
-     * Applies the passed config or sets up a standard config when no config is provided on initialization
+     * Applies the passed config or sets up a standard config when no config is provided
      */
     private setConfig(config?: MaskSettings): void {
-        this.opacity = config?.opacity || 1.0;
-        this.flipHorizontal = config?.flipHorizontal || true
-        this.maskBlurAmount = config?.maskBlurAmount || 3;
-        this.foregroundColor = config?.foregroundColor || { r: 255, g: 255, b: 255, a: 0 };
-        this.backgroundColor = config?.backgroundColor || { r: 0, g: 177, b: 64, a: 255 };
+        const defaults = DEFAULT_MASK_SETTINGS;
+        this.opacity = config?.opacity || defaults.opacity;
+        this.flipHorizontal = config?.flipHorizontal || defaults.flipHorizontal;
+        this.maskBlurAmount = config?.maskBlurAmount || defaults.maskBlurAmount;
+        this.foregroundColor = config?.foregroundColor || defaults.foregroundColor;
+        this.backgroundColor = config?.backgroundColor || defaults.backgroundColor;
 
         this.segmentConfig = {
-            flipHorizontal: config?.segmentPerson.flipHorizontal || true,
-            internalResolution: config?.segmentPerson.internalResolution || 'medium',
-            segmentationThreshold: config?.segmentPerson.segmentationThreshold || 0.7,
-            maxDetections: config?.segmentPerson.maxDetections || 1,
-            quantBytes: config?.segmentPerson.quantBytes || 2
+            flipHorizontal: config?.segmentPerson.flipHorizontal || defaults.segmentPerson.flipHorizontal,
+            internalResolution: config?.segmentPerson.internalResolution || defaults.segmentPerson.internalResolution,
+            segmentationThreshold: config?.segmentPerson.segmentationThreshold || defaults.segmentPerson.segmentationThreshold,
+            maxDetections: config?.segmentPerson.maxDetections || defaults.segmentPerson.maxDetections,
+            quantBytes: config?.segmentPerson.quantBytes || defaults.segmentPerson.quantBytes
         };
-        console.log(this.segmentConfig)
     }
 
     /**
-     * 
-     *
-     * @param {IGreenScreenConfig} config
-     * @memberof GreenScreenStream
+     * Sets the provided BodyPixConfig or BodypixMode.
+     * Can be used while rendering to switch out the currently used config.
+     * Expect a few seconds of freezed image while the new model is loading.
+     * @param config 
      */
     public async setBodyPixModel(config: IGreenScreenConfig) {
-        const model = await asyncCall(this.loadBodyPixModel(config));
-        if (model.error)
-            throw model.error;
-        this.model = model.result;
+        const model = await this.loadBodyPixModel(config);
+
+        this.bodyPix = model;
+        this.modelLoaded = true;
     }
     /**
-     * Sets up the bodypix model either via custom config or a preset.
+     * Sets up the bodypix model either via custom config or a preset (mode).
      * If neither is provided, a default config is used.
      * @param config 
      */
     private async loadBodyPixModel(config: IGreenScreenConfig) {
-        let bodyPixMode: IBodyPixConfig;
-        console.log(config)
-        if (config?.bodyPixConfig) {
-            bodyPixMode = config?.bodyPixConfig;
-            console.log("No config found. Fallining back to mode")
+        let bodyPixMode: ModelConfig;
+
+        if (config?.bodyPixConfig)
+            bodyPixMode = config?.bodyPixConfig as ModelConfig;
+        else
+            bodyPixMode = getBodyPixMode(config?.bodyPixMode) as ModelConfig;
+
+        if(this.modelLoaded) {
+            this.bodyPix.dispose();
+            this.modelLoaded = false;
         }
-        else {
-            bodyPixMode = getBodyPixMode(config?.bodyPixMode);
-        }
-        return bodyPix.load(bodyPixMode);
+
+        return load(bodyPixMode);
     }
 
     /**
@@ -460,15 +460,18 @@ export class GreenScreenStream {
         return new Promise<void>((resolve, reject) => {
             try {
                 this.mediaStream.addTrack(track);
-                this.sourceVideo = document.createElement("video") as HTMLVideoElement;
-                this.sourceVideo.width = this.canvas.width, this.sourceVideo.height = this.canvas.height;
+                this.sourceVideo = document.createElement("video");
+                this.sourceVideo.width = this.canvas.width;
+                this.sourceVideo.height = this.canvas.height;
                 this.sourceVideo.autoplay = true;
                 this.sourceVideo.srcObject = this.mediaStream;
+
                 this.sourceVideo.onloadeddata = () => {
                     this.sourceVideo.play();
                     this.cameraSource = this.sourceVideo;
                     resolve();
                 }
+
                 this.sourceVideo.onerror = (err) => {
                     reject(err);
                 }
@@ -509,6 +512,7 @@ export class GreenScreenStream {
         }
         return pixelArray;
     }
+    
     /**
      *  Get the dominant color from the imageData provided
      *
@@ -522,6 +526,7 @@ export class GreenScreenStream {
         const d = p[0];
         return d;
     };
+
     /**
      * Get a pallette (10) of the most used colors in the imageData provided
      *

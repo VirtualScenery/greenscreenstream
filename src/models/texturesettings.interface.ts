@@ -1,5 +1,5 @@
 
-export type TextureSettings = {
+export interface ITextureSettings {
     background: {
         fn: Function
     }

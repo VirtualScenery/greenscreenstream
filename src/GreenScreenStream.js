@@ -1,4 +1,23 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -15,9 +34,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GreenScreenStream = void 0;
 const demolishedrenderer_1 = require("demolishedrenderer");
 const quantize_1 = __importDefault(require("quantize"));
-const bodyPix = require('@tensorflow-models/body-pix');
 require("@tensorflow/tfjs-backend-webgl");
 require("@tensorflow/tfjs-backend-cpu");
+const BODY_PIX = __importStar(require("@tensorflow-models/body-pix"));
+const body_pix_1 = require("@tensorflow-models/body-pix");
+const masksettings_interface_1 = require("./models/masksettings.interface");
 const glsl_constants_1 = require("./models/glsl-constants");
 const green_screen_method_enum_1 = require("./models/green-screen-method.enum");
 const get_bodypix_mode_util_1 = require("./utils/get-bodypix-mode.util");
@@ -210,7 +231,7 @@ class GreenScreenStream {
     start(maxFps) {
         this.maxFps = maxFps || 25;
         this.isRendering = true;
-        const canvas = document.createElement("canvas"); //need to declare it here because of scope
+        const canvas = document.createElement("canvas");
         switch (this.greenScreenMethod) {
             case green_screen_method_enum_1.GreenScreenMethod.VirtualBackgroundUsingGreenScreen:
                 this.renderVirtualBackgroundGreenScreen(0);
@@ -234,7 +255,7 @@ class GreenScreenStream {
             return;
         if (this.startTime == null)
             this.startTime = t;
-        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+        const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
         if (seg > this.frame) {
             this.frame = seg;
             this.demolished.R(t / 1000);
@@ -251,14 +272,11 @@ class GreenScreenStream {
                 return;
             if (this.startTime == null)
                 this.startTime = t;
-            let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-            if (seg > this.frame) {
-                const { error, result } = yield async_call_util_1.asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
-                if (error)
-                    return console.error(error);
-                //    console.time("bodyPix toMask")
-                const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
-                bodyPix.drawMask(this.cameraSource, this.sourceVideo, maskedImage, this.opacity, this.maskBlurAmount, this.flipHorizontal);
+            const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+            if (seg > this.frame && this.modelLoaded) {
+                const result = yield this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
+                const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
+                BODY_PIX.drawMask(this.cameraSource, this.sourceVideo, maskedImage, this.opacity, this.maskBlurAmount, this.flipHorizontal);
                 this.frame = seg;
                 this.demolished.R(t / 1000);
             }
@@ -277,11 +295,9 @@ class GreenScreenStream {
             if (this.startTime == null)
                 this.startTime = t;
             let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-            if (seg > this.frame) {
-                const { error, result } = yield async_call_util_1.asyncCall(this.model.segmentPerson(this.sourceVideo, this.segmentConfig));
-                if (error)
-                    return console.error(error);
-                const maskedImage = bodyPix.toMask(result, this.foregroundColor, this.backgroundColor);
+            if (seg > this.frame && this.modelLoaded) {
+                const result = yield this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
+                const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
                 ctx.putImageData(maskedImage, 0, 0);
                 this.demolished.R(t / 1000);
             }
@@ -316,70 +332,69 @@ class GreenScreenStream {
     initialize(backgroundUrl, config) {
         this.setConfig(config === null || config === void 0 ? void 0 : config.maskSettings);
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            let result = yield async_call_util_1.asyncCall(this.setupRenderer(backgroundUrl));
+            let result = yield (0, async_call_util_1.asyncCall)(this.setupRenderer(backgroundUrl));
             if (result.error)
                 reject(result.error);
             if (!this.demolished)
                 reject(`No renderer created. Background source must be provided.`);
             if (!this.useML)
                 resolve(this);
-            const model = yield async_call_util_1.asyncCall(this.loadBodyPixModel(config));
+            const model = yield (0, async_call_util_1.asyncCall)(this.loadBodyPixModel(config));
             if (model.error)
                 reject(model.error);
-            console.log(model.result);
-            this.model = model.result;
+            this.bodyPix = model.result;
+            this.modelLoaded = true;
             resolve(this);
         }));
     }
     /**
-     * Applies the passed config or sets up a standard config when no config is provided on initialization
+     * Applies the passed config or sets up a standard config when no config is provided
      */
     setConfig(config) {
-        this.opacity = (config === null || config === void 0 ? void 0 : config.opacity) || 1.0;
-        this.flipHorizontal = (config === null || config === void 0 ? void 0 : config.flipHorizontal) || true;
-        this.maskBlurAmount = (config === null || config === void 0 ? void 0 : config.maskBlurAmount) || 3;
-        this.foregroundColor = (config === null || config === void 0 ? void 0 : config.foregroundColor) || { r: 255, g: 255, b: 255, a: 0 };
-        this.backgroundColor = (config === null || config === void 0 ? void 0 : config.backgroundColor) || { r: 0, g: 177, b: 64, a: 255 };
+        const defaults = masksettings_interface_1.DEFAULT_MASK_SETTINGS;
+        this.opacity = (config === null || config === void 0 ? void 0 : config.opacity) || defaults.opacity;
+        this.flipHorizontal = (config === null || config === void 0 ? void 0 : config.flipHorizontal) || defaults.flipHorizontal;
+        this.maskBlurAmount = (config === null || config === void 0 ? void 0 : config.maskBlurAmount) || defaults.maskBlurAmount;
+        this.foregroundColor = (config === null || config === void 0 ? void 0 : config.foregroundColor) || defaults.foregroundColor;
+        this.backgroundColor = (config === null || config === void 0 ? void 0 : config.backgroundColor) || defaults.backgroundColor;
         this.segmentConfig = {
-            flipHorizontal: (config === null || config === void 0 ? void 0 : config.segmentPerson.flipHorizontal) || true,
-            internalResolution: (config === null || config === void 0 ? void 0 : config.segmentPerson.internalResolution) || 'medium',
-            segmentationThreshold: (config === null || config === void 0 ? void 0 : config.segmentPerson.segmentationThreshold) || 0.7,
-            maxDetections: (config === null || config === void 0 ? void 0 : config.segmentPerson.maxDetections) || 1,
-            quantBytes: (config === null || config === void 0 ? void 0 : config.segmentPerson.quantBytes) || 2
+            flipHorizontal: (config === null || config === void 0 ? void 0 : config.segmentPerson.flipHorizontal) || defaults.segmentPerson.flipHorizontal,
+            internalResolution: (config === null || config === void 0 ? void 0 : config.segmentPerson.internalResolution) || defaults.segmentPerson.internalResolution,
+            segmentationThreshold: (config === null || config === void 0 ? void 0 : config.segmentPerson.segmentationThreshold) || defaults.segmentPerson.segmentationThreshold,
+            maxDetections: (config === null || config === void 0 ? void 0 : config.segmentPerson.maxDetections) || defaults.segmentPerson.maxDetections,
+            quantBytes: (config === null || config === void 0 ? void 0 : config.segmentPerson.quantBytes) || defaults.segmentPerson.quantBytes
         };
-        console.log(this.segmentConfig);
     }
     /**
-     *
-     *
-     * @param {IGreenScreenConfig} config
-     * @memberof GreenScreenStream
+     * Sets the provided BodyPixConfig or BodypixMode.
+     * Can be used while rendering to switch out the currently used config.
+     * Expect a few seconds of freezed image while the new model is loading.
+     * @param config
      */
     setBodyPixModel(config) {
         return __awaiter(this, void 0, void 0, function* () {
-            const model = yield async_call_util_1.asyncCall(this.loadBodyPixModel(config));
-            if (model.error)
-                throw model.error;
-            this.model = model.result;
+            const model = yield this.loadBodyPixModel(config);
+            this.bodyPix = model;
+            this.modelLoaded = true;
         });
     }
     /**
-     * Sets up the bodypix model either via custom config or a preset.
+     * Sets up the bodypix model either via custom config or a preset (mode).
      * If neither is provided, a default config is used.
      * @param config
      */
     loadBodyPixModel(config) {
         return __awaiter(this, void 0, void 0, function* () {
             let bodyPixMode;
-            console.log(config);
-            if (config === null || config === void 0 ? void 0 : config.bodyPixConfig) {
+            if (config === null || config === void 0 ? void 0 : config.bodyPixConfig)
                 bodyPixMode = config === null || config === void 0 ? void 0 : config.bodyPixConfig;
-                console.log("No config found. Fallining back to mode");
+            else
+                bodyPixMode = (0, get_bodypix_mode_util_1.getBodyPixMode)(config === null || config === void 0 ? void 0 : config.bodyPixMode);
+            if (this.modelLoaded) {
+                this.bodyPix.dispose();
+                this.modelLoaded = false;
             }
-            else {
-                bodyPixMode = get_bodypix_mode_util_1.getBodyPixMode(config === null || config === void 0 ? void 0 : config.bodyPixMode);
-            }
-            return bodyPix.load(bodyPixMode);
+            return (0, body_pix_1.load)(bodyPixMode);
         });
     }
     /**
@@ -394,7 +409,8 @@ class GreenScreenStream {
             try {
                 this.mediaStream.addTrack(track);
                 this.sourceVideo = document.createElement("video");
-                this.sourceVideo.width = this.canvas.width, this.sourceVideo.height = this.canvas.height;
+                this.sourceVideo.width = this.canvas.width;
+                this.sourceVideo.height = this.canvas.height;
                 this.sourceVideo.autoplay = true;
                 this.sourceVideo.srcObject = this.mediaStream;
                 this.sourceVideo.onloadeddata = () => {
@@ -466,7 +482,7 @@ class GreenScreenStream {
      */
     pallette(imageData, pixelCount) {
         const pixelArray = this.pixelArray(imageData.data, pixelCount, 10);
-        const cmap = quantize_1.default(pixelArray, 8);
+        const cmap = (0, quantize_1.default)(pixelArray, 8);
         const palette = cmap ? cmap.palette() : null;
         return palette;
     }
