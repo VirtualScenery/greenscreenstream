@@ -3,19 +3,18 @@ import quantize from 'quantize'
 
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu'
-
 import * as BODY_PIX from '@tensorflow-models/body-pix';
-import { load, BodyPix } from '@tensorflow-models/body-pix';
-import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
+import { BodyPix, load } from '@tensorflow-models/body-pix';
 
 
-import { DEFAULT_MASK_SETTINGS, MaskSettings, RGBA } from './models/masksettings.interface';
+import { IGreenScreenConfig } from './models/green-screen-config.interface';
+import { MaskSettings, DEFAULT_MASK_SETTINGS, RGBA } from './models/masksettings.interface';
 import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
-import { GreenScreenConfig } from './models/green-screen-config.interface';
-import { TextureSettings } from './models/texturesettings.interface';
+import { ITextureSettings } from './models/texturesettings.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
 import { getBodyPixMode } from './utils/get-bodypix-mode.util';
 import { asyncCall } from './utils/async-call.util';
+import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 
 export class GreenScreenStream {
     isRendering: boolean;
@@ -27,7 +26,7 @@ export class GreenScreenStream {
     maskBlurAmount: number;
     foregroundColor: RGBA;
     backgroundColor: RGBA;
-    ctx: any;
+    ctx:  WebGLRenderingContext | WebGL2RenderingContext;
     demolished: DR;
     mediaStream: MediaStream;
     bodyPix: BodyPix;
@@ -40,34 +39,27 @@ export class GreenScreenStream {
     private useML: boolean;
 
     mainFrag: string = MAIN_FRAG;
-
     mainVert: string = MAIN_VERT;
-
     bufferVert: string = BUFFER_VERT;
-
     bufferFrag: string = BUFFER_FRAG;
     maxFps: number;
-
-    canvas:HTMLCanvasElement | OffscreenCanvas;
-    offscreen : OffscreenCanvas;
+    canvas: HTMLCanvasElement
     modelLoaded: boolean;
 
-    constructor(
-        public greenScreenMethod: GreenScreenMethod, 
-        public canvasEl?: HTMLCanvasElement, 
-        width: number = 640,
-        height: number = 360
-    ) {
+    constructor(public greenScreenMethod: GreenScreenMethod, public canvasEl?: HTMLCanvasElement, width: number = 640, height: number = 360) {
         this.mediaStream = new MediaStream();
-        if (canvasEl)
-            this.canvas =  canvasEl
-        else 
+        if (canvasEl) {
+            this.canvas = canvasEl
+        }
+        else {
             this.canvas = document.createElement("canvas") as HTMLCanvasElement;
-   
+        }
+
         this.canvas.width = width; this.canvas.height = height;
 
+        
         if (greenScreenMethod !== GreenScreenMethod.VirtualBackgroundUsingGreenScreen)
-                this.useML = true;
+            this.useML = true;
     }
 
     /**
@@ -120,7 +112,7 @@ export class GreenScreenStream {
                 reject(err);
             });
 
-            const textureSettings: TextureSettings = this.getTextureSettings();
+            const textureSettings: ITextureSettings = this.getTextureSettings();
 
             await this.prepareRenderer(textureSettings).catch(err => {
                 reject(new Error("Cannot setup renderer"))
@@ -132,7 +124,7 @@ export class GreenScreenStream {
     /**
      * Get the necessary texture settings
      */
-    private getTextureSettings(): TextureSettings {
+    private getTextureSettings(): ITextureSettings {
         return {
             "background": {
                 //unit: 33985,
@@ -164,7 +156,7 @@ export class GreenScreenStream {
      * Instantiates & prepares the demolishedRenderer 
      * @param textureSettings
      */
-    private prepareRenderer(textureSettings: TextureSettings): Promise<boolean | Error> {
+    private prepareRenderer(textureSettings: ITextureSettings): Promise<boolean | Error> {
         return new Promise<boolean | Error>(async (resolve, reject) => {
             try {
                 this.demolished = new DR(this.canvas as any, this.mainVert, this.mainFrag);
@@ -266,11 +258,11 @@ export class GreenScreenStream {
     /**
      * Start render
      *
-     * @param {number} [maxFps] maximum frame rate, defaults to 60fps
+     * @param {number} [maxFps] maximum frame rate, defaults to 25fps
      * @memberof GreenScreenStream
      */
     start(maxFps?: number) {
-        this.maxFps = maxFps || 60;
+        this.maxFps = maxFps || 25;
         this.isRendering = true;
         const canvas = document.createElement("canvas");
         switch (this.greenScreenMethod) {
@@ -307,10 +299,10 @@ export class GreenScreenStream {
      * Renders a virtual background using ML
      * @param t 
      */
-    
+
     private async renderVirtualBackground(t: number): Promise<void> {
         if (!this.isRendering)
-            return;        
+            return;
         if (this.startTime == null) this.startTime = t;
         const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
 
@@ -326,9 +318,9 @@ export class GreenScreenStream {
                 this.maskBlurAmount,
                 this.flipHorizontal
             );
-
             this.frame = seg;
             this.demolished.R(t / 1000);
+
         }
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
     }
@@ -378,7 +370,7 @@ export class GreenScreenStream {
      * @return {*}  {Promise<GreenScreenStream>}
      * @memberof GreenScreenStream
      */
-    initialize(backgroundUrl?: string, config?: GreenScreenConfig): Promise<GreenScreenStream> {
+    initialize(backgroundUrl?: string, config?: IGreenScreenConfig): Promise<GreenScreenStream> {
 
         this.setConfig(config?.maskSettings);
 
@@ -430,7 +422,7 @@ export class GreenScreenStream {
      * Expect a few seconds of freezed image while the new model is loading.
      * @param config 
      */
-    public async setBodyPixModel(config: GreenScreenConfig) {
+    public async setBodyPixModel(config: IGreenScreenConfig) {
         const model = await this.loadBodyPixModel(config);
 
         this.bodyPix = model;
@@ -441,7 +433,7 @@ export class GreenScreenStream {
      * If neither is provided, a default config is used.
      * @param config 
      */
-    private async loadBodyPixModel(config: GreenScreenConfig) {
+    private async loadBodyPixModel(config: IGreenScreenConfig) {
         let bodyPixMode: ModelConfig;
 
         if (config?.bodyPixConfig)
@@ -498,12 +490,12 @@ export class GreenScreenStream {
      */
     captureStream(fps?: number): MediaStream {
         try {
-            return this.canvas["captureStream"](fps || 25) as MediaStream;      
+            return this.canvas["captureStream"](fps || 25) as MediaStream;
         } catch (error) {
-                throw error;
-        }              
+            throw error;
+        }
     }
-    
+
     private pixelArray(pixels: any, pixelCount: number, quality: number): Array<number> {
         const pixelArray = [];
         for (let i = 0, offset, r, g, b, a; i < pixelCount; i = i + quality) {

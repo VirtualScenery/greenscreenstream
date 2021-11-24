@@ -1,1 +1,1 @@
-{"version":3,"file":"bodypixmode.enum.js","sourceRoot":"","sources":["bodypixmode.enum.ts"],"names":[],"mappings":";;;AAAA;;GAEG;AACH,IAAY,WAKX;AALD,WAAY,WAAW;IACnB,6CAAQ,CAAA;IACR,qDAAY,CAAA;IACZ,mDAAW,CAAA;IACX,mDAAW,CAAA;AACf,CAAC,EALW,WAAW,GAAX,mBAAW,KAAX,mBAAW,QAKtB"}
+{"version":3,"file":"bodypixmode.enum.js","sourceRoot":"","sources":["bodypixmode.enum.ts"],"names":[],"mappings":";;;AAAA;;GAEG;AACH,IAAY,4BAKX;AALD,WAAY,4BAA4B;IACpC,+EAAQ,CAAA;IACR,uFAAY,CAAA;IACZ,qFAAW,CAAA;IACX,qFAAW,CAAA;AACf,CAAC,EALW,4BAA4B,GAA5B,oCAA4B,KAA5B,oCAA4B,QAKvC"}

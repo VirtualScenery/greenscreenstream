@@ -5,13 +5,13 @@ const bodypix_config_1 = require("../models/bodypix-config");
 const bodypixmode_enum_1 = require("../models/bodypixmode.enum");
 function getBodyPixMode(mode) {
     switch (mode) {
-        case bodypixmode_enum_1.BodyPixMode.Fast:
+        case bodypixmode_enum_1.GreenScreenStreamBodyPixMode.Fast:
             return bodypix_config_1.bodyPixFast;
-        case bodypixmode_enum_1.BodyPixMode.Precise:
+        case bodypixmode_enum_1.GreenScreenStreamBodyPixMode.Precise:
             return bodypix_config_1.bodyPixPrecise;
-        case bodypixmode_enum_1.BodyPixMode.Maximum:
+        case bodypixmode_enum_1.GreenScreenStreamBodyPixMode.Maximum:
             return bodypix_config_1.bodyPixMaximum;
-        case bodypixmode_enum_1.BodyPixMode.Standard:
+        case bodypixmode_enum_1.GreenScreenStreamBodyPixMode.Standard:
         //Fallthrough intended
         default:
             return bodypix_config_1.bodyPixStandard;

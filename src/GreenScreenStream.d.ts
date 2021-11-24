@@ -1,7 +1,7 @@
 import { DR } from 'demolishedrenderer';
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
-import { GreenScreenConfig } from './models/green-screen-config.interface';
+import { IGreenScreenConfig } from './models/green-screen-config.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
 export declare class GreenScreenStream {
     greenScreenMethod: GreenScreenMethod;
@@ -123,12 +123,12 @@ export declare class GreenScreenStream {
      * @return {*}  {Promise<GreenScreenStream>}
      * @memberof GreenScreenStream
      */
-    initialize(backgroundUrl?: string, config?: GreenScreenConfig): Promise<GreenScreenStream>;
+    initialize(backgroundUrl?: string, config?: IGreenScreenConfig): Promise<GreenScreenStream>;
     /**
      * Applies the passed config or sets up a standard config when no config is provided on initialization
      */
     private setConfig;
-    setBodyPixModel(config: GreenScreenConfig): Promise<void>;
+    setBodyPixModel(config: IGreenScreenConfig): Promise<void>;
     /**
      * Sets up the bodypix model either via custom config or a preset.
      * If neither is provided, a default config is used.
