@@ -1,5 +1,4 @@
-import { GreenScreenStream } from "../../src/GreenScreenStream";
-import { GreenScreenMethod } from "../../src/models/green-screen-method.enum";
+import { GreenScreenMethod, GreenScreenStream } from "../..";
 
 
 document.addEventListener("DOMContentLoaded", () => {

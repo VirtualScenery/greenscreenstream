@@ -1,6 +1,6 @@
-import { GreenScreenStream } from "../../src/GreenScreenStream";
-import { GreenScreenStreamBodyPixMode } from "../../src/models/bodypixmode.enum";
-import { GreenScreenMethod } from "../../src/models/green-screen-method.enum";
+import { GreenScreenStream } from "../../";
+import { GreenScreenStreamBodyPixMode } from "../../";
+import { GreenScreenMethod } from "../../";
 
 let greenscreen;
 document.addEventListener("DOMContentLoaded", () => startStream(GreenScreenStreamBodyPixMode.Standard));
