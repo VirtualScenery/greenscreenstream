@@ -1,6 +1,6 @@
 // thank you Aurélien Prunier
-import { GreenScreenStream } from "../../src/GreenScreenStream";
-import { GreenScreenMethod } from "../../src/models/green-screen-method.enum";
+import { GreenScreenStream } from "../../";
+import { GreenScreenMethod } from "../../";
 import { FRACTAL } from "./fractal";
 document.addEventListener("DOMContentLoaded", () => {
   navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false }).then(async (mediaStream: MediaStream) => {
