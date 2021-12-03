@@ -1,6 +1,7 @@
-import { GreenScreenStream } from "../../";
-import { GreenScreenStreamBodyPixMode } from "../../";
-import { GreenScreenMethod } from "../../";
+import { GreenScreenStream } from "../../src/GreenScreenStream";
+import { GreenScreenStreamBodyPixMode } from "../../src/models/bodypixmode.enum";
+import { GreenScreenMethod } from "../../src/models/green-screen-method.enum";
+
 
 let greenscreen;
 document.addEventListener("DOMContentLoaded", () => startStream(GreenScreenStreamBodyPixMode.Standard));
@@ -9,11 +10,8 @@ async function startStream(quality?: GreenScreenStreamBodyPixMode) {
     const bgfile = location.hash.length > 0 ? location.hash.replace("#", "") : "beach.jpg";
     const inStream: MediaStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false });
     const track = inStream.getVideoTracks()[0];
-
-
     greenscreen = new GreenScreenStream(GreenScreenMethod.VirtualBackground, null, 640,360);
     await greenscreen.addVideoTrack(track);
-
     await greenscreen.initialize(`../assets/${bgfile}`, { bodyPixMode: quality });
     greenscreen.start(60);
     const outStream = greenscreen.captureStream(60); // capture result as a MediaSteam and attacj to video element
