@@ -1,7 +1,9 @@
 import { DR } from 'demolishedrenderer';
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
+import { BodyPix } from '@tensorflow-models/body-pix';
 import { IGreenScreenConfig } from './models/green-screen-config.interface';
+import { RGBA } from './models/masksettings.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
 export declare class GreenScreenStream {
     greenScreenMethod: GreenScreenMethod;
@@ -10,15 +12,15 @@ export declare class GreenScreenStream {
     frame: number;
     rafId: number;
     startTime: number;
-    opacity: any;
-    flipHorizontal: any;
-    maskBlurAmount: any;
-    foregroundColor: any;
-    backgroundColor: any;
-    ctx: any;
+    opacity: number;
+    flipHorizontal: boolean;
+    maskBlurAmount: number;
+    foregroundColor: RGBA;
+    backgroundColor: RGBA;
+    ctx: WebGLRenderingContext | WebGL2RenderingContext;
     demolished: DR;
     mediaStream: MediaStream;
-    model: any;
+    bodyPix: BodyPix;
     private segmentConfig;
     private backgroundSource;
     private sourceVideo;
@@ -31,8 +33,8 @@ export declare class GreenScreenStream {
     bufferVert: string;
     bufferFrag: string;
     maxFps: number;
-    canvas: HTMLCanvasElement | OffscreenCanvas;
-    offscreen: OffscreenCanvas;
+    canvas: HTMLCanvasElement;
+    modelLoaded: boolean;
     constructor(greenScreenMethod: GreenScreenMethod, canvasEl?: HTMLCanvasElement, width?: number, height?: number);
     /**
      * Set the background
@@ -90,7 +92,7 @@ export declare class GreenScreenStream {
     /**
      * Start render
      *
-     * @param {number} [maxFps] maximum frame rate, defaults to 60fps
+     * @param {number} [maxFps] maximum frame rate, defaults to 25fps
      * @memberof GreenScreenStream
      */
     start(maxFps?: number): void;
@@ -125,12 +127,18 @@ export declare class GreenScreenStream {
      */
     initialize(backgroundUrl?: string, config?: IGreenScreenConfig): Promise<GreenScreenStream>;
     /**
-     * Applies the passed config or sets up a standard config when no config is provided on initialization
+     * Applies the passed config or sets up a standard config when no config is provided
      */
     private setConfig;
+    /**
+     * Sets the provided BodyPixConfig or BodypixMode.
+     * Can be used while rendering to switch out the currently used config.
+     * Expect a few seconds of freezed image while the new model is loading.
+     * @param config
+     */
     setBodyPixModel(config: IGreenScreenConfig): Promise<void>;
     /**
-     * Sets up the bodypix model either via custom config or a preset.
+     * Sets up the bodypix model either via custom config or a preset (mode).
      * If neither is provided, a default config is used.
      * @param config
      */

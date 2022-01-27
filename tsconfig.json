@@ -14,9 +14,7 @@
     // "declarationMap": true,                /* Generates a sourcemap for each corresponding '.d.ts' file. */
     "sourceMap": true, /* Generates corresponding '.map' file. */
     "declaration": true,
-    "declarationDir": "./dist",
     // "outFile": "./",                      /* Concatenate and emit output to single file. */
-    "outDir": "./dist", /* Redirect output structure to the directory. */
     // "composite": true,                     /* Enable project compilation */
     // "incremental": true,                   /* Enable incremental compilation */
     // "tsBuildInfoFile": "./",               /* Specify file to store incremental compilation information */
