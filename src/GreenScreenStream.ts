@@ -30,8 +30,8 @@ export class GreenScreenStream {
     demolished: DR;
     mediaStream: MediaStream;
     bodyPix: BodyPix;
+    backgroundSource: HTMLImageElement | HTMLVideoElement;   
     private segmentConfig: any;
-    private backgroundSource: any;
     private sourceVideo: HTMLVideoElement;
     private cameraSource: HTMLVideoElement | HTMLCanvasElement;
     private chromaKey = { r: 0.0, g: 0.6941176470588235, b: 0.25098039215686274 } // { r: 0, g: 177, b: 64
