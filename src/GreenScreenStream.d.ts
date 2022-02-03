@@ -21,8 +21,8 @@ export declare class GreenScreenStream {
     demolished: DR;
     mediaStream: MediaStream;
     bodyPix: BodyPix;
+    backgroundSource: HTMLImageElement | HTMLVideoElement;
     private segmentConfig;
-    private backgroundSource;
     private sourceVideo;
     private cameraSource;
     private chromaKey;
