@@ -55,8 +55,9 @@ exports.BUFFER_FRAG = `
     void mainImage( out vec4 fragColor, in vec2 fragCoord )
     {
         vec2 fragPos =  1. - fragCoord.xy / resolution.xy;
-        vec4 fg = texture(webcam, fragPos);
-        vec4 bg = texture(background, fragPos);
+      
+        vec4 fg = texture(webcam, vec2(1.-fragPos.x,fragPos.y));
+        vec4 bg = texture(background, vec2(1.-fragPos.x,fragPos.y));
 
         vec4 keyYUV =  RGBtoYUV * chromaKey;
         vec4 yuv = RGBtoYUV * fg;
