@@ -8,7 +8,7 @@ import { BodyPix, load } from '@tensorflow-models/body-pix';
 
 
 import { IGreenScreenConfig } from './models/green-screen-config.interface';
-import { MaskSettings, DEFAULT_MASK_SETTINGS, RGBA } from './models/masksettings.interface';
+import { IMaskSettings, DEFAULT_MASK_SETTINGS, RGBA } from './models/masksettings.interface';
 import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
 import { ITextureSettings } from './models/texturesettings.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
@@ -399,7 +399,7 @@ export class GreenScreenStream {
     /**
      * Applies the passed config or sets up a standard config when no config is provided
      */
-    private setConfig(config?: MaskSettings): void {
+    private setConfig(config?: IMaskSettings): void {
         const defaults = DEFAULT_MASK_SETTINGS;
         this.opacity = config?.opacity || defaults.opacity;
         this.flipHorizontal = config?.flipHorizontal || defaults.flipHorizontal;

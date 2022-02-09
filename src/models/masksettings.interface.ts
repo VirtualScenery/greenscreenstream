@@ -2,7 +2,7 @@ export interface RGBA {
     r: number, g: number, b: number, a: number
 }
 
-export interface MaskSettings {
+export interface IMaskSettings {
     opacity?: number
     flipHorizontal?: boolean
     maskBlurAmount?: number
@@ -17,7 +17,7 @@ export interface MaskSettings {
     }
 };
 
-export const DEFAULT_MASK_SETTINGS: MaskSettings = {
+export const DEFAULT_MASK_SETTINGS: IMaskSettings = {
     opacity: 1.0,
     flipHorizontal: true,
     maskBlurAmount: 3,
