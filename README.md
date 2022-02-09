@@ -39,11 +39,11 @@ Below you find a few different examples of greenscreenstream.
 # GreenScreenStream API
 
 ## Contents
-### [GreenScreenStream (Class)](#GreenScreenStream (Class))
-### [GreenScreenMethod (Enum)](#GreenScreenMethod (Enum))
-### [IGreenScreenConfig (Interface)](#IGreenScreenConfig (Interface))
-### [GreenScreenStreamBodyPixMode (Enum)](#GreenScreenStreamBodyPixMode (Enum))
-### [IMaskSettings (Interface)](#IMaskSettings (Interface))
+### [GreenScreenStream (Class)](#greenscreenstream-class-1)
+### [GreenScreenMethod (Enum)](#greenscreenmethod-enum-1)
+### [IGreenScreenConfig (Interface)](#igreenscreenconfig-interface-1)
+### [GreenScreenStreamBodyPixMode (Enum)](#greenscreenstreambodypixmode-enum-1)
+### [IMaskSettings (Interface)](#imasksettings-interface-1)
 <br/>
 <br/>
 
