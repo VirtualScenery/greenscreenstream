@@ -1,0 +1,1 @@
+{"version":3,"file":"texturesettings.interface.d.ts","sourceRoot":"","sources":["../../src/models/texturesettings.interface.ts"],"names":[],"mappings":"AACA,MAAM,WAAW,gBAAgB;IAC7B,UAAU,EAAE;QACR,EAAE,EAAE,QAAQ,CAAA;KACf,CAAA;IACD,MAAM,EAAE;QACJ,EAAE,EAAE,QAAQ,CAAA;KACf,CAAA;CACJ"}
