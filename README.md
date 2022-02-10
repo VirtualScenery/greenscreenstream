@@ -23,18 +23,18 @@ All rendering is done in realtime using a WebGL2 pixel shader (glsl) and optiona
 Below you find a few different examples of greenscreenstream.
 
 
- [https://coloquium.github.io/greenscreenstream/example/mlWebGL ](https://coloquium.github.io/greenscreenstream/example/mlWebGL)
+ [ML based Virtual Background - Image Background](https://magnusthor.github.io/greenscreenstream-examples/example/mlWebGL/)
 
- [https://coloquium.github.io/greenscreenstream/example/WebGL#snow.mp4 ](https://coloquium.github.io/greenscreenstream/example/WebGL)
+ [ML based Virtual Background - Video Background](https://magnusthor.github.io/greenscreenstream-examples/example/mlWebGL#snow.mp4)
  
- [https://coloquium.github.io/greenscreenstream/example/hologram ](https://coloquium.github.io/greenscreenstream/example/hologram)
+ [ML based Virtual Background - WebGL Background](https://magnusthor.github.io/greenscreenstream-examples/example/procedual)
 
- [https://coloquium.github.io/greenscreenstream/example/procedual ](https://coloquium.github.io/greenscreenstream/example/procedual)
+ [ML based Virtual Background - Hologram Effect](https://magnusthor.github.io/greenscreenstream-examples/example/hologram)
 
- [https://coloquium.github.io/greenscreenstream/example/WebGL ](https://coloquium.github.io/greenscreenstream/example/WebGL)
+ [https://magnusthor.github.io/greenscreenstream-examples/example/WebGL ](https://magnusthor.github.io/greenscreenstream-examples/example/WebGL)
 
 
-> See `/example/` folder in repo for implementation. 
+> Look [here](https://github.com/MagnusThor/greenscreenstream-examples) for implementation. 
 
 <br/>
 <br/>
