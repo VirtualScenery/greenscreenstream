@@ -39,7 +39,7 @@
     "@tensorflow/tfjs": "^3.11.0",
     "@tensorflow/tfjs-backend-cpu": "^3.11.0",
     "@tensorflow/tfjs-backend-webgl": "^3.11.0",
-    "demolishedrenderer": "^3.0.0",
+    "demolishedrenderer": "^3.1.0",
     "quantize": "^1.0.2"
   },
   "devDependencies": {
