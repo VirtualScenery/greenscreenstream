@@ -102,7 +102,7 @@ captureStream(fps?:  number):  MediaStream;
 
 Gets the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack.
 ```ts
-getColorsFromStream(): { palette: any, dominant: any } {
+getColorsFromStream(): { palette: [number, number,number][], dominant: [number, number,number] } {
 ```
 ### setChromaKey
 
@@ -115,19 +115,19 @@ setChromaKey(r: number, g: number, b: number, threshold?: number): void;
 ### setRange
    Range is used to decide the amount of color to be used from either foreground or background.Playing with this variable will decide how much the foreground and background blend together.  
 ```ts
-setMaskRange(x:number,y:number):void
+setMaskRange(x:number,y:number): void
 ```
 ###  dominant
 
 Get the most dominant color based on imageData and number of pixels
 ```ts
-dominant(imageData: ImageData, pixelCount: number) {
+dominant(imageData: ImageData, pixelCount: number): [number, number,number] {
 ```
 
 ### palette
-Get an Array of the most siginficant colors in the MediaTrack
+Get an Array of the most significant colors in the MediaTrack
 ```ts
-pallette(imageData: ImageData, pixelCount: number) {
+pallette(imageData: ImageData, pixelCount: number): [number, number,number][] | null {
 ```
 
 ### setBackground
@@ -160,8 +160,8 @@ but requires the user to have a green screen.
 
 # IGreenScreenConfig (Interface)
 Provides detailed configuration options for GreenScreenStream. \
-```maskSettings```
-```bodyPixMode``` can be used to apply premade BodyPix configurations (see ```GreenScreenStreamBodyPixMode``` for more details),\
+```maskSettings``` can be uses to fine tune the virtual background appearance. (\
+```bodyPixMode``` can be used to apply premade BodyPix configurations (see [GreenScreenStreamBodyPixMode](#greenscreenstreambodypixmode-enum-1) for more details),\
 while ```bodyPixConfig``` allows you to configure BodyPix as you see fit. If both are provided, ```bodyPixMode``` will be ignored.
 ```ts
 IGreenScreenConfig {
@@ -176,9 +176,9 @@ IGreenScreenConfig {
 # GreenScreenStreamBodyPixMode (Enum)
 Determines which BodyPix Preset GreenStream should use.
 
-Presets `Standard` or `Precise` are recommended for most usecases.\
-`Fast` is meant for really weak clients and is unprecise.\
-`Maximum` uses amore complex ML Model and thus causes much more network traffic & gpu + cpu load.\
+Presets `Standard` or `Precise` are recommended for most use cases.\
+`Fast` is meant for really weak clients, is unprecise and causes flickering.\
+`Maximum` uses a more complex ML Model and thus causes much more network traffic & gpu + cpu load.\
 ```ts
 enum GreenScreenStreamBodyPixMode {
     Fast = 0,
@@ -232,7 +232,7 @@ interface IMaskSettings {
     backgroundColor?: RGBA
     segmentPerson?: {
         flipHorizontal?: boolean
-        internalReslution?: string
+        internalResolution?: string
         segmentationThreshold?: number
         maxDetections?: number
         quantBytes?: number
