@@ -1,5 +1,5 @@
  <p>
-  <a href="https://github.com/coloquium/greenscreenstream" target="blank"><img src="https://i.ibb.co/hmnR2jz/gss-v1.png" width="230" alt="GreenScreenStream Logo" /></a>
+  <a href="https://github.com/coloquium/greenscreenstream" target="blank"><img src="https://i.ibb.co/hmnR2jz/gss-v1.png" width="200" alt="GreenScreenStream Logo" /></a>
 </p>
 <h1>
   GreenScreenStream
@@ -8,7 +8,7 @@
 ## About
 GreenScreenStream provides a wide range of options for manipulating Mediastreams.
 
-Generate a new MediaStream for `<canvas>` ,`<video>`  elements based on provided MediaStreamTrack and a background image/video just using JavaScript.  
+Generate a new MediaStream for `<canvas>` & `<video>`  elements based on provided MediaStreamTrack and a background image/video just using JavaScript.  
 
 After processed and "green screened" you can capture the stream and use it in your WebRTC calls for instance.
 
@@ -36,8 +36,22 @@ Below you find a few different examples of greenscreenstream.
 
 > See `/example/` folder in repo for implementation. 
 
+<br/>
+<br/>
+
 # GreenScreenStream API
-## constructor
+
+## Contents
+### [GreenScreenStream (Class)](#greenscreenstream-class-1)
+### [GreenScreenMethod (Enum)](#greenscreenmethod-enum-1)
+### [IGreenScreenConfig (Interface)](#igreenscreenconfig-interface-1)
+### [GreenScreenStreamBodyPixMode (Enum)](#greenscreenstreambodypixmode-enum-1)
+### [IMaskSettings (Interface)](#imasksettings-interface-1)
+<br/>
+<br/>
+
+# GreenScreenStream (Class)
+## Constructor
 
 Creates an instance of GreenScreenStream
 
@@ -45,7 +59,7 @@ Creates an instance of GreenScreenStream
 constructor(greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number)
 ```
 
-## methods
+## Methods
 
 ###  initialize
 
@@ -57,21 +71,25 @@ initialize(backgroundUrl?: string, config?: GreenScreenConfig): Promise<boolean>
 
 ### addVideoTrack
 
-Adds a `MediaStreamTrack` track (i.e webcam)
+Adds a `MediaStreamTrack`  (i.e webcam)
 ```ts
-addVideoTrack(track:  MediaStreamTrack):  void;
+addVideoTrack(track:  MediaStreamTrack):  Promise<void | any>;
 ```
 ### start
 
-Starts rendering the greenscreen
+Starts rendering the greenscreen.
+You can optionally set a fps maximum here
 ```ts
-start():void
+start(maxFps?: number): void
 ```
-### stop():void
+### stop
 
-Stops rendering the greenscreen
+Stops the rendering process.
+Optionally stop the media streams.\
+Stopping the streams works only if there are no references to them
+outside of greenscreenstream.
 ```ts
-stop(stopMediaStreams?:boolean):void
+stop(stopMediaStreams?:boolean): void
 ```
 
 ### captureStream
@@ -84,7 +102,7 @@ captureStream(fps?:  number):  MediaStream;
 
 Gets the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack.
 ```ts
-getColorsFromStream(): { palette: any, dominant: any } {
+getColorsFromStream(): { palette: [number, number,number][], dominant: [number, number,number] } {
 ```
 ### setChromaKey
 
@@ -97,54 +115,133 @@ setChromaKey(r: number, g: number, b: number, threshold?: number): void;
 ### setRange
    Range is used to decide the amount of color to be used from either foreground or background.Playing with this variable will decide how much the foreground and background blend together.  
 ```ts
-setMaskRange(x:number,y:number):void
+setMaskRange(x:number,y:number): void
 ```
 ###  dominant
 
 Get the most dominant color based on imageData and number of pixels
 ```ts
-dominant(imageData: ImageData, pixelCount: number) {
+dominant(imageData: ImageData, pixelCount: number): [number, number,number] {
 ```
 
 ### palette
-
-   Get an Array of the most siginficant colors in the MediaTrack
+Get an Array of the most significant colors in the MediaTrack
 ```ts
-pallette(imageData: ImageData, pixelCount: number) {
+pallette(imageData: ImageData, pixelCount: number): [number, number,number][] | null {
 ```
-## MaskSettings
-```ts
-    MaskSettings = {
 
-            opacity: number;                // 0.- 1.
-            flipHorizontal: boolean;
-            maskBlurAmount: number;         // 0-20 // Pixels to blur the mask by.
-            foregroundColor: {
-                r: number;
-                g: number;
-                b: number;
-                a: number;
-            };
-            backgroundColor: {
-                r: number;
-                g: number;
-                b: number;
-                a: number;
-            };
-            segmentPerson: {
-                flipHorizontal: boolean;
-                internalResolution: string;      // low, medium, high, full 
-                segmentationThreshold: number;   / 0. -1. 
-                maxDetections: number;
-            };
-            
-    };
+### setBackground
+Sets the virtual background to a new image or video. Can be done while GreenScreenStream is running.
+```ts
+ setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error>
 ```
-## GreenScreenMethod ( enum )
+### setBodyPixModel
+Swaps out the currently used BodyPixModel used in ml mode (```GreenScreenMethod.VirtualBackground```) (See GreenScreenMethod down below)
+```ts
+setBodyPixModel(config: IGreenScreenConfig): Promise<void>
+```
+<br/>
+<br/>
+
+# GreenScreenMethod (Enum)
+Describes the method GreenScreenStream should use for applying a virtual background.\
+```GreenScreenMethod.VirtualBackground``` uses a machine learning model (Tensorflow BodyPix)\
+```GreenScreenMethod.VirtualBackgroundUsingGreenScreen``` works without a machine learning model and thus consumes much less performance,\
+but requires the user to have a green screen.
 ```ts
     enum GreenScreenMethod {
      Mask = 0, // get the mask
-     VirtualBackground = 1, // get mask and apply the provided background
-     VirtualBackgroundUsingGreenScreen = 2 // user has a green screen , use shader only.
+     VirtualBackground = 1, // get mask and apply the provided background using MachineLearning
+     VirtualBackgroundUsingGreenScreen = 2 // user has a green screen, use shader only.
     }
 ```
+<br/>
+<br/>
+
+# IGreenScreenConfig (Interface)
+Provides detailed configuration options for GreenScreenStream. \
+```maskSettings``` can be uses to fine tune the virtual background appearance. (\
+```bodyPixMode``` can be used to apply premade BodyPix configurations (see [GreenScreenStreamBodyPixMode](#greenscreenstreambodypixmode-enum-1) for more details),\
+while ```bodyPixConfig``` allows you to configure BodyPix as you see fit. If both are provided, ```bodyPixMode``` will be ignored.
+```ts
+IGreenScreenConfig {
+    maskSettings?: IMaskSettings,
+    bodyPixMode?: GreenScreenStreamBodyPixMode,
+    bodyPixConfig?: IBodyPixConfig
+}
+```
+<br/>
+<br/>
+
+# GreenScreenStreamBodyPixMode (Enum)
+Determines which BodyPix Preset GreenStream should use.
+
+Presets `Standard` or `Precise` are recommended for most use cases.\
+`Fast` is meant for really weak clients, is unprecise and causes flickering.\
+`Maximum` uses a more complex ML Model and thus causes much more network traffic & gpu + cpu load.\
+```ts
+enum GreenScreenStreamBodyPixMode {
+    Fast = 0,
+    Standard = 1,
+    Precise = 2,
+    Maximum = 3
+}
+```
+<br/>
+
+## Preset Details:
+### Fast
+```ts
+architecture: 'MobileNetV1',
+outputStride: 16,
+multiplier: 0.5,
+quantBytes: 1
+```
+### Standard
+```ts
+architecture: 'MobileNetV1',
+outputStride: 16,
+multiplier: 0.75,
+quantBytes: 2
+```
+### Precise
+```ts
+architecture: 'MobileNetV1',
+outputStride: 16,
+multiplier: 1,
+quantBytes: 2
+```
+### Maximum
+```ts
+architecture: 'ResNet50',
+outputStride: 32,
+quantBytes: 2
+```
+
+<br/>
+<br/>
+
+# IMaskSettings (Interface)
+Description TBA
+```ts
+interface IMaskSettings {
+    opacity?: number
+    flipHorizontal?: boolean
+    maskBlurAmount?: number
+    foregroundColor?: RGBA
+    backgroundColor?: RGBA
+    segmentPerson?: {
+        flipHorizontal?: boolean
+        internalResolution?: string
+        segmentationThreshold?: number
+        maxDetections?: number
+        quantBytes?: number
+    }
+};
+```
+```ts
+export interface RGBA {
+    r: number, g: number, b: number, a: number
+}
+```
+
