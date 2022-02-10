@@ -1,5 +1,5 @@
  <p>
-  <a href="https://github.com/coloquium/greenscreenstream" target="blank"><img src="https://i.ibb.co/hmnR2jz/gss-v1.png" width="230" alt="GreenScreenStream Logo" /></a>
+  <a href="https://github.com/coloquium/greenscreenstream" target="blank"><img src="https://i.ibb.co/hmnR2jz/gss-v1.png" width="200" alt="GreenScreenStream Logo" /></a>
 </p>
 <h1>
   GreenScreenStream
@@ -35,6 +35,9 @@ Below you find a few different examples of greenscreenstream.
 
 
 > See `/example/` folder in repo for implementation. 
+
+<br/>
+<br/>
 
 # GreenScreenStream API
 
@@ -77,16 +80,16 @@ addVideoTrack(track:  MediaStreamTrack):  Promise<void | any>;
 Starts rendering the greenscreen.
 You can optionally set a fps maximum here
 ```ts
-start(maxFps?: number):void
+start(maxFps?: number): void
 ```
-### stop():void
+### stop
 
-Stops rendering the greenscreen.
-You can also optionally stop the media streams.
-This only works if you get rid off all references to the media stream
+Stops the rendering process.
+Optionally stop the media streams.\
+Stopping the streams works only if there are no references to them
 outside of greenscreenstream.
 ```ts
-stop(stopMediaStreams?:boolean):void
+stop(stopMediaStreams?:boolean): void
 ```
 
 ### captureStream
@@ -171,7 +174,11 @@ IGreenScreenConfig {
 <br/>
 
 # GreenScreenStreamBodyPixMode (Enum)
-Description TBA
+Determines which BodyPix Preset GreenStream should use.
+
+Presets `Standard` or `Precise` are recommended for most usecases.\
+`Fast` is meant for really weak clients and is unprecise.\
+`Maximum` uses amore complex ML Model and thus causes much more network traffic & gpu + cpu load.\
 ```ts
 enum GreenScreenStreamBodyPixMode {
     Fast = 0,
@@ -181,9 +188,8 @@ enum GreenScreenStreamBodyPixMode {
 }
 ```
 <br/>
-<br/>
 
-## Configuration Details:
+## Preset Details:
 ### Fast
 ```ts
 architecture: 'MobileNetV1',
