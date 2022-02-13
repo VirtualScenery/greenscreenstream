@@ -58,7 +58,7 @@ Below you find a few different examples of greenscreenstream.
 Creates an instance of GreenScreenStream
 
 ```ts
-constructor(greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, resolution: VideoResolution | Vector2)
+constructor(greenScreenMethod: GreenScreenMethod, resolution: VideoResolution | Vector2, canvas?: HTMLCanvasElement)
 ```
 
 ## Methods
