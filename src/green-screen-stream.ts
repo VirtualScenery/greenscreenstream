@@ -12,7 +12,6 @@ import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-co
 import { ITextureSettings } from './models/texturesettings.interface';
 import { GreenScreenMethod } from './models/green-screen-method.enum';
 import { getBodyPixMode } from './utils/get-bodypix-mode.util';
-import { asyncCall } from './utils/async-call.util';
 import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
 
 export class GreenScreenStream {
@@ -47,9 +46,9 @@ export class GreenScreenStream {
 
     constructor(public greenScreenMethod: GreenScreenMethod, public canvasEl?: HTMLCanvasElement, width: number = 640, height: number = 360) {
         this.mediaStream = new MediaStream();
-        if (canvasEl) 
+        if (canvasEl)
             this.canvas = canvasEl;
-        else 
+        else
             this.canvas = document.createElement("canvas") as HTMLCanvasElement;
 
         this.canvas.width = width; this.canvas.height = height;
@@ -66,30 +65,22 @@ export class GreenScreenStream {
      * @return {*}  {Promise<GreenScreenStream>}
      * @memberof GreenScreenStream
      */
-    public initialize(backgroundUrl?: string, config?: IGreenScreenConfig): Promise<GreenScreenStream> {
+    public async initialize(backgroundUrl: string, config?: IGreenScreenConfig): Promise<void> {
 
         this.setConfig(config?.maskSettings);
 
-        return new Promise<GreenScreenStream>(async (resolve, reject) => {
+        await this.setupRenderer(backgroundUrl);
 
-            let result = await asyncCall(this.setupRenderer(backgroundUrl));
-            if (result.error)
-                reject(result.error);
+        if (!this.demolished)
+            throw new Error(`No renderer created. Valid Background source must be provided.`);
 
-            if (!this.demolished)
-                reject(`No renderer created. Background source must be provided.`);
+        if (!this.useML)
+            return;
 
-            if (!this.useML)
-                resolve(this);
+        const model = await this.loadBodyPixModel(config);
 
-            const model = await asyncCall(this.loadBodyPixModel(config));
-            if (model.error)
-                reject(model.error);
-
-            this.bodyPix = model.result;
-            this.modelLoaded = true;
-            resolve(this);
-        });
+        this.bodyPix = model;
+        this.modelLoaded = true;
     }
 
     /**
@@ -103,7 +94,7 @@ export class GreenScreenStream {
         this.isRendering = true;
         const canvas = document.createElement("canvas");
         switch (this.greenScreenMethod) {
-            
+
             case GreenScreenMethod.VirtualBackground:
                 this.cameraSource = canvas;
                 this.renderVirtualBackground(0);
@@ -113,10 +104,10 @@ export class GreenScreenStream {
                 this.renderVirtualBackgroundGreenScreen(0);
                 break;
 
-            case GreenScreenMethod.Mask:
-                const ctx = canvas.getContext("2d");
-                this.renderMask(0, ctx);
-                break;
+            // case GreenScreenMethod.Mask:
+            //     const ctx = canvas.getContext("2d");
+            //     this.renderMask(0, ctx);
+            //     break;
         }
     }
 
@@ -206,7 +197,7 @@ export class GreenScreenStream {
                 bg.autoplay = true;
                 bg.loop = true;
                 bg.onerror = () => reject(new Error(`Unable to load background video from ${src}`));
-    
+
                 bg.onloadeddata = () => {
                     this.backgroundSource = bg;
                     resolve(bg);
@@ -251,7 +242,7 @@ export class GreenScreenStream {
      * @returns
      * @memberof GreenScreenStream
      */
-    public pallette(imageData: ImageData, pixelCount: number): [number, number,number][] | null {
+    public pallette(imageData: ImageData, pixelCount: number): [number, number, number][] | null {
         const pixelArray = this.pixelArray(imageData.data, pixelCount, 10);
         const cmap = quantize(pixelArray, 8);
         const palette = cmap ? cmap.palette() : null;
@@ -266,7 +257,7 @@ export class GreenScreenStream {
      * @param {number} b 0.0 - 1.0
      * @memberof GreenScreenStream
      */
-     public setChromaKey(r: number, g: number, b: number): void {
+    public setChromaKey(r: number, g: number, b: number): void {
         this.chromaKey.r = r;
         this.chromaKey.g = g;
         this.chromaKey.b = b;
@@ -290,7 +281,7 @@ export class GreenScreenStream {
      * @returns {{ palette: any, dominant: any }}
      * @memberof GreenScreenStream
      */
-    public getColorsFromStream(): { palette: [number, number,number][] | null, dominant: [number, number, number] } {
+    public getColorsFromStream(): { palette: [number, number, number][] | null, dominant: [number, number, number] } {
         let glCanvas = this.canvas;
         let tempCanvas = document.createElement("canvas");
         tempCanvas.width = glCanvas.width;
@@ -464,25 +455,25 @@ export class GreenScreenStream {
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
     }
 
-    /**
-     * Renders using a mask
-     * @param t 
-     * @param ctx 
-     */
-    private async renderMask(t: number, ctx: CanvasRenderingContext2D): Promise<void> {
-        if (!this.isRendering)
-            return;
-        if (this.startTime == null) this.startTime = t;
-        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-        if (seg > this.frame && this.modelLoaded) {
-            const result = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
-            const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
+    // /**
+    //  * Renders using a mask
+    //  * @param t 
+    //  * @param ctx 
+    //  */
+    // private async renderMask(t: number, ctx: CanvasRenderingContext2D): Promise<void> {
+    //     if (!this.isRendering)
+    //         return;
+    //     if (this.startTime == null) this.startTime = t;
+    //     let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+    //     if (seg > this.frame && this.modelLoaded) {
+    //         const result = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
+    //         const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
 
-            ctx.putImageData(maskedImage, 0, 0);
-            this.demolished.R(t / 1000);
-        }
-        this.rafId = requestAnimationFrame((ts) => this.renderMask(ts, ctx));
-    }
+    //         ctx.putImageData(maskedImage, 0, 0);
+    //         this.demolished.R(t / 1000);
+    //     }
+    //     this.rafId = requestAnimationFrame((ts) => this.renderMask(ts, ctx));
+    // }
 
     /**
      * Applies the passed config or sets up a standard config when no config is provided
