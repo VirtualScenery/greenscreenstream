@@ -4,6 +4,7 @@ export interface ITexture {
         w?: number;
         h?: number;
 }
+
 export class RenderTarget {
         framebuffer: WebGLFramebuffer;
         renderbuffer: WebGLRenderbuffer;
@@ -22,6 +23,7 @@ export class RenderTarget {
                 this.uniforms = customUniforms;
         }
 }
+
 export class DemolishedRenderer {
         gl: WebGLRenderingContext;
         mainProgram: WebGLProgram;
@@ -35,6 +37,7 @@ export class DemolishedRenderer {
         screenVertexPosition: number;
         frameCount: number = 0;
         deltaTime: number = 0;
+        
         header: string =`
         #version 300 es
         #ifdef GL_ES

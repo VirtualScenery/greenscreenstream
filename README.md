@@ -44,8 +44,10 @@ Below you find a few different examples of greenscreenstream.
 ## Contents
 ### [GreenScreenStream (Class)](#greenscreenstream-class-1)
 ### [GreenScreenMethod (Enum)](#greenscreenmethod-enum-1)
+### [Vector2 (Class)](#vector2-class-1)
+### [VideoResolution (Enum)](#videoresolution-enum-1)
 ### [IGreenScreenConfig (Interface)](#igreenscreenconfig-interface-1)
-### [GreenScreenStreamBodyPixMode (Enum)](#greenscreenstreambodypixmode-enum-1)
+### [BodyPixMode (Enum)](#bodypixmode-enum-1)
 ### [IMaskSettings (Interface)](#imasksettings-interface-1)
 <br/>
 <br/>
@@ -56,7 +58,7 @@ Below you find a few different examples of greenscreenstream.
 Creates an instance of GreenScreenStream
 
 ```ts
-constructor(greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, width?: number, height?: number)
+constructor(greenScreenMethod: GreenScreenMethod, canvas?: HTMLCanvasElement, resolution: VideoResolution | Vector2)
 ```
 
 ## Methods
@@ -98,6 +100,27 @@ Capture the rendered result to a MediaStream that you apply to your `<video>` el
 ```ts
 captureStream(fps?:  number):  MediaStream;    
 ```
+
+### setBackground
+Sets the virtual background to a new image or video. Can be done while GreenScreenStream is running.
+```ts
+ setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error>
+```
+
+### setBodyPixModel
+Swaps out the currently used BodyPixModel used in ml mode (```GreenScreenMethod.VirtualBackground```) (See [GreenScreenMethod (Enum)](#greenscreenmethod-enum-1))
+```ts
+setBodyPixModel(config: IGreenScreenConfig): Promise<void>
+```
+
+### scaleImageToCanvas
+Scales the passed in image to canvas size and returns a scaled copy of it.
+Gets called automatically everytime a new image background is set.
+The imageOptions defaults to the current size of the greenscreen canvas and high quality .
+```ts
+public async scaleImageToCanvas(image: HTMLImageElement, imageOptions?: ImageBitmapOptions): Promise<HTMLImageElement>
+```
+
 ### getColorsFromStream
 
 Gets the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack.
@@ -130,16 +153,6 @@ Get an Array of the most significant colors in the MediaTrack
 pallette(imageData: ImageData, pixelCount: number): [number, number,number][] | null {
 ```
 
-### setBackground
-Sets the virtual background to a new image or video. Can be done while GreenScreenStream is running.
-```ts
- setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error>
-```
-### setBodyPixModel
-Swaps out the currently used BodyPixModel used in ml mode (```GreenScreenMethod.VirtualBackground```) (See GreenScreenMethod down below)
-```ts
-setBodyPixModel(config: IGreenScreenConfig): Promise<void>
-```
 <br/>
 <br/>
 
@@ -149,11 +162,53 @@ Describes the method GreenScreenStream should use for applying a virtual backgro
 ```GreenScreenMethod.VirtualBackgroundUsingGreenScreen``` works without a machine learning model and thus consumes much less performance,\
 but requires the user to have a green screen.
 ```ts
-    enum GreenScreenMethod {
-     Mask = 0, // get the mask
-     VirtualBackground = 1, // get mask and apply the provided background using MachineLearning
-     VirtualBackgroundUsingGreenScreen = 2 // user has a green screen, use shader only.
-    }
+enum GreenScreenMethod {
+    VirtualBackground, 
+    VirtualBackgroundUsingGreenScreen
+}
+```
+<br/>
+<br/>
+
+# VideoResolution (enum)
+Describes resolution presets GreenScreenStream should use.
+```ts
+enum VideoResolution {
+    SD,
+    HD,
+    FullHD,
+    WQHD,
+    UHD
+}
+```
+<br/>
+<br/>
+
+# Vector2 (Class)
+Describes a custom resolution that GreenScreenStream can use.
+
+## Constructor
+Both values default to zero.
+```ts
+constructor(x?: number, y?: number)
+```
+## Methods
+### toString
+Returns the current values as a string (`" x : y"`)
+```ts
+toString(): string 
+```
+
+### toMediaConstraint
+Returns the current value in a format that can be used as `MediaTrackConstraints`
+```ts
+toMediaConstraint(): MediaTrackConstraints
+```
+
+### isValidVector2
+Checks if the provided input is a valid vector2. Returns `true` if so.
+```ts
+static isValidVector2(input: any): boolean
 ```
 <br/>
 <br/>
@@ -173,14 +228,14 @@ IGreenScreenConfig {
 <br/>
 <br/>
 
-# GreenScreenStreamBodyPixMode (Enum)
+# BodyPixMode (Enum)
 Determines which BodyPix Preset GreenStream should use.
 
 Presets `Standard` or `Precise` are recommended for most use cases.\
 `Fast` is meant for really weak clients, is unprecise and causes flickering.\
 `Maximum` uses a more complex ML Model and thus causes much more network traffic & gpu + cpu load.\
 ```ts
-enum GreenScreenStreamBodyPixMode {
+enum BodyPixMode {
     Fast = 0,
     Standard = 1,
     Precise = 2,

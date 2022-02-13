@@ -1,6 +1,6 @@
 import { bodyPixFast, bodyPixMaximum, bodyPixPrecise, bodyPixStandard } from "../models/bodypix-config";
 import { IBodyPixConfig } from "../models/bodypix-config.interface";
-import { BodyPixMode } from "../models/bodypixmode.enum";
+import { BodyPixMode } from "../models/enums/bodypixmode.enum";
 
 export function getBodyPixMode(mode: BodyPixMode): IBodyPixConfig {
     switch (mode) {
