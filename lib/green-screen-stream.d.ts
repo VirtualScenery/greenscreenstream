@@ -1,4 +1,4 @@
-import { DR } from 'demolishedrenderer';
+import { DemolishedRenderer } from './renderer/webgl/DemolishedRenderer';
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 import { BodyPix } from '@tensorflow-models/body-pix';
@@ -18,7 +18,7 @@ export declare class GreenScreenStream {
     foregroundColor: RGBA;
     backgroundColor: RGBA;
     ctx: WebGLRenderingContext | WebGL2RenderingContext;
-    demolished: DR;
+    demolished: DemolishedRenderer;
     mediaStream: MediaStream;
     bodyPix: BodyPix;
     backgroundSource: HTMLImageElement | HTMLVideoElement;
@@ -37,6 +37,43 @@ export declare class GreenScreenStream {
     modelLoaded: boolean;
     constructor(greenScreenMethod: GreenScreenMethod, canvasEl?: HTMLCanvasElement, width?: number, height?: number);
     /**
+     * Initalize
+     * @param {string} [backgroundUrl]
+     * @param {MaskSettings} [config]
+     * @return {*}  {Promise<GreenScreenStream>}
+     * @memberof GreenScreenStream
+     */
+    initialize(backgroundUrl: string, config?: IGreenScreenConfig): Promise<void>;
+    /**
+     * Start render
+     *
+     * @param {number} [maxFps] maximum frame rate, defaults to 25fps
+     * @memberof GreenScreenStream
+     */
+    start(maxFps?: number): void;
+    /**
+     * Stop renderer
+     * @param {boolean} [stopMediaStreams]
+     * @memberof GreenScreenStream
+     */
+    stop(stopMediaStreams?: boolean): void;
+    /**
+     * Add a MediaStreamTrack track (i.e webcam )
+     *
+     * @param {MediaStreamTrack} track
+     * @return {*}  {Promise<void|any>}
+     * @memberof GreenScreenStream
+     */
+    addVideoTrack(track: MediaStreamTrack): Promise<void | any>;
+    /**
+     * Capture the rendered result to a MediaStream
+     *
+     * @param {number} [fps]
+     * @returns {MediaStream}
+     * @memberof GreenScreenStream
+     */
+    captureStream(fps?: number): MediaStream;
+    /**
      * Set the background
      *
      * @param {string} src
@@ -44,6 +81,59 @@ export declare class GreenScreenStream {
      * @memberof GreenScreenStream
      */
     setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error>;
+    /**
+     * Sets the provided BodyPixConfig or BodypixMode.
+     * Can be used while rendering to switch out the currently used config.
+     * Expect a few seconds of freezed image while the new model is loading.
+     * @param config
+     */
+    setBodyPixModel(config: IGreenScreenConfig): Promise<void>;
+    /**
+     *  Get the dominant color from the imageData provided
+     *
+     * @param {ImageData} imageData
+     * @param {number} pixelCount
+     * @returns
+     * @memberof GreenScreenStream
+     */
+    dominant(imageData: ImageData, pixelCount: number): [number, number, number];
+    /**
+     * Get a pallette (10) of the most used colors in the imageData provided
+     *
+     * @param {ImageData} imageData
+     * @param {number} pixelCount
+     * @returns
+     * @memberof GreenScreenStream
+     */
+    pallette(imageData: ImageData, pixelCount: number): [number, number, number][] | null;
+    /**
+     * Set the color to be removed
+     * i.e (0.05,0.63,0.14)
+     * @param {number} r  0.0 - 1.0
+     * @param {number} g 0.0 - 1.0
+     * @param {number} b 0.0 - 1.0
+     * @memberof GreenScreenStream
+     */
+    setChromaKey(r: number, g: number, b: number): void;
+    /**
+     * Range is used to decide the amount of color to be used from either foreground or background.
+     * Changing these values will decide how much the foreground and background blend together.
+     * @param {number} x
+     * @param {number} y
+     * @memberof GreenScreenStream
+     */
+    setMaskRange(x: number, y: number): void;
+    flipStreamHorizontal(): void;
+    /**
+     * Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack
+     *
+     * @returns {{ palette: any, dominant: any }}
+     * @memberof GreenScreenStream
+     */
+    getColorsFromStream(): {
+        palette: [number, number, number][] | null;
+        dominant: [number, number, number];
+    };
     /**
      * Set up the rendering, texturesx etc.
      *
@@ -63,40 +153,6 @@ export declare class GreenScreenStream {
      */
     private prepareRenderer;
     /**
-     * Set the color to be removed
-     * i.e (0.05,0.63,0.14)
-     * @param {number} r  0.0 - 1.0
-     * @param {number} g 0.0 - 1.0
-     * @param {number} b 0.0 - 1.0
-     * @memberof GreenScreenStream
-     */
-    setChromaKey(r: number, g: number, b: number): void;
-    /**
-     * Range is used to decide the amount of color to be used from either foreground or background.
-     * Playing with this variable will decide how much the foreground and background blend together.
-     * @param {number} x
-     * @param {number} y
-     * @memberof GreenScreenStream
-     */
-    setMaskRange(x: number, y: number): void;
-    /**
-     * Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack
-     *
-     * @returns {{ palette: any, dominant: any }}
-     * @memberof GreenScreenStream
-     */
-    getColorsFromStream(): {
-        palette: any;
-        dominant: any;
-    };
-    /**
-     * Start render
-     *
-     * @param {number} [maxFps] maximum frame rate, defaults to 25fps
-     * @memberof GreenScreenStream
-     */
-    start(maxFps?: number): void;
-    /**
     * Renders a virtual background using a greenscreen
     * @param t
     */
@@ -107,76 +163,15 @@ export declare class GreenScreenStream {
      */
     private renderVirtualBackground;
     /**
-     * Renders using a mask
-     * @param t
-     * @param ctx
-     */
-    private renderMask;
-    /**
-     * Stop renderer
-     * @param {boolean} [stopMediaStreams]
-     * @memberof GreenScreenStream
-     */
-    stop(stopMediaStreams?: boolean): void;
-    /**
-     * Initalize
-     * @param {string} [backgroundUrl]
-     * @param {MaskSettings} [config]
-     * @return {*}  {Promise<GreenScreenStream>}
-     * @memberof GreenScreenStream
-     */
-    initialize(backgroundUrl?: string, config?: IGreenScreenConfig): Promise<GreenScreenStream>;
-    /**
      * Applies the passed config or sets up a standard config when no config is provided
      */
     private setConfig;
-    /**
-     * Sets the provided BodyPixConfig or BodypixMode.
-     * Can be used while rendering to switch out the currently used config.
-     * Expect a few seconds of freezed image while the new model is loading.
-     * @param config
-     */
-    setBodyPixModel(config: IGreenScreenConfig): Promise<void>;
     /**
      * Sets up the bodypix model either via custom config or a preset (mode).
      * If neither is provided, a default config is used.
      * @param config
      */
     private loadBodyPixModel;
-    /**
-     * Add a MediaStreamTrack track (i.e webcam )
-     *
-     * @param {MediaStreamTrack} track
-     * @return {*}  {Promise<void|any>}
-     * @memberof GreenScreenStream
-     */
-    addVideoTrack(track: MediaStreamTrack): Promise<void | any>;
-    /**
-     * Capture the rendered result to a MediaStream
-     *
-     * @param {number} [fps]
-     * @returns {MediaStream}
-     * @memberof GreenScreenStream
-     */
-    captureStream(fps?: number): MediaStream;
     private pixelArray;
-    /**
-     *  Get the dominant color from the imageData provided
-     *
-     * @param {ImageData} imageData
-     * @param {number} pixelCount
-     * @returns
-     * @memberof GreenScreenStream
-     */
-    dominant(imageData: ImageData, pixelCount: number): any;
-    /**
-     * Get a pallette (10) of the most used colors in the imageData provided
-     *
-     * @param {ImageData} imageData
-     * @param {number} pixelCount
-     * @returns
-     * @memberof GreenScreenStream
-     */
-    pallette(imageData: ImageData, pixelCount: number): any;
 }
 //# sourceMappingURL=green-screen-stream.d.ts.map

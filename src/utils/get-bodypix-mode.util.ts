@@ -1,19 +1,19 @@
 import { bodyPixFast, bodyPixMaximum, bodyPixPrecise, bodyPixStandard } from "../models/bodypix-config";
 import { IBodyPixConfig } from "../models/bodypix-config.interface";
-import { GreenScreenStreamBodyPixMode } from "../models/bodypixmode.enum";
+import { BodyPixMode } from "../models/bodypixmode.enum";
 
-export function getBodyPixMode(mode: GreenScreenStreamBodyPixMode): IBodyPixConfig {
+export function getBodyPixMode(mode: BodyPixMode): IBodyPixConfig {
     switch (mode) {
-        case GreenScreenStreamBodyPixMode.Fast:
+        case BodyPixMode.Fast:
             return bodyPixFast; 
 
-        case GreenScreenStreamBodyPixMode.Precise:
+        case BodyPixMode.Precise:
             return bodyPixPrecise;
         
-        case GreenScreenStreamBodyPixMode.Maximum:
+        case BodyPixMode.Maximum:
             return bodyPixMaximum;
         
-        case GreenScreenStreamBodyPixMode.Standard:
+        case BodyPixMode.Standard:
             //Fallthrough intended
         default:
             return bodyPixStandard;

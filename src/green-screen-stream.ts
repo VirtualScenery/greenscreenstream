@@ -1,4 +1,4 @@
-import { DR } from 'demolishedrenderer';
+import { DemolishedRenderer } from './renderer/webgl/DemolishedRenderer';
 import quantize from 'quantize'
 
 import '@tensorflow/tfjs-backend-webgl';
@@ -25,7 +25,7 @@ export class GreenScreenStream {
     foregroundColor: RGBA;
     backgroundColor: RGBA;
     ctx: WebGLRenderingContext | WebGL2RenderingContext;
-    demolished: DR;
+    demolished: DemolishedRenderer;
     mediaStream: MediaStream;
     bodyPix: BodyPix;
     backgroundSource: HTMLImageElement | HTMLVideoElement;
@@ -73,7 +73,6 @@ export class GreenScreenStream {
 
         if (!this.demolished)
             throw new Error(`No renderer created. Valid Background source must be provided.`);
-
         if (!this.useML)
             return;
 
@@ -155,9 +154,7 @@ export class GreenScreenStream {
                 }
                 this.sourceVideo.onerror = (err) => reject(err);
             }
-            catch (error) {
-                reject(error)
-            }
+            catch (error) { reject(error) }
         })
     }
 
@@ -265,7 +262,7 @@ export class GreenScreenStream {
 
     /**
      * Range is used to decide the amount of color to be used from either foreground or background.
-     * Playing with this variable will decide how much the foreground and background blend together.
+     * Changing these values will decide how much the foreground and background blend together.
      * @param {number} x
      * @param {number} y
      * @memberof GreenScreenStream
@@ -273,6 +270,10 @@ export class GreenScreenStream {
     public setMaskRange(x: number, y: number): void {
         this.maskRange.x = x;
         this.maskRange.y = y;
+    }
+
+    public flipStreamHorizontal() {
+        this.segmentConfig.flipHorizontal = !this.segmentConfig.flipHorizontal;
     }
 
     /**
@@ -363,11 +364,11 @@ export class GreenScreenStream {
     private prepareRenderer(textureSettings: ITextureSettings): Promise<boolean | Error> {
         return new Promise<boolean | Error>(async (resolve, reject) => {
             try {
-                this.demolished = new DR(this.canvas as any, this.mainVert, this.mainFrag);
-                this.demolished.aA(
+                this.demolished = new DemolishedRenderer(this.canvas as any, this.mainVert, this.mainFrag);
+                this.demolished.addAssets(
                     textureSettings
                     , () => {
-                        this.demolished.aB(
+                        this.demolished.addBuffer(
                             "A",
                             this.mainVert,
                             this.bufferFrag,
@@ -421,7 +422,7 @@ export class GreenScreenStream {
         const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
         if (seg > this.frame) {
             this.frame = seg;
-            this.demolished.R(t / 1000)
+            this.demolished.render(t / 1000)
         }
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackgroundGreenScreen(ts));
     }
@@ -450,7 +451,7 @@ export class GreenScreenStream {
                 this.flipHorizontal
             );
             this.frame = seg;
-            this.demolished.R(t / 1000);
+            this.demolished.render(t / 1000);
         }
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
     }

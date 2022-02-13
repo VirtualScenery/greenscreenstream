@@ -4,7 +4,7 @@ export interface RGBA {
     b: number;
     a: number;
 }
-export interface MaskSettings {
+export interface IMaskSettings {
     opacity?: number;
     flipHorizontal?: boolean;
     maskBlurAmount?: number;
@@ -18,5 +18,5 @@ export interface MaskSettings {
         quantBytes?: number;
     };
 }
-export declare const DEFAULT_MASK_SETTINGS: MaskSettings;
+export declare const DEFAULT_MASK_SETTINGS: IMaskSettings;
 //# sourceMappingURL=masksettings.interface.d.ts.map

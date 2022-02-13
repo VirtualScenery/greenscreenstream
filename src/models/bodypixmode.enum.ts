@@ -1,7 +1,7 @@
 /**
  * The accuracy mode of the AI person segmenting.
  */
-export enum GreenScreenStreamBodyPixMode {
+export enum BodyPixMode {
     Fast = 0,
     Standard = 1,
     Precise = 2,

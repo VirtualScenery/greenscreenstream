@@ -1,6 +1,5 @@
 export declare enum GreenScreenMethod {
-    Mask = 0,
-    VirtualBackground = 1,
-    VirtualBackgroundUsingGreenScreen = 2
+    VirtualBackground = 0,
+    VirtualBackgroundUsingGreenScreen = 1
 }
 //# sourceMappingURL=green-screen-method.enum.d.ts.map
