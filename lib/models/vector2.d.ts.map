@@ -1,0 +1,1 @@
+{"version":3,"file":"vector2.d.ts","sourceRoot":"","sources":["../../src/models/vector2.ts"],"names":[],"mappings":"AAAA,qBAAa,OAAO;IAGL,CAAC,EAAE,MAAM;IACT,CAAC,EAAE,MAAM;gBADT,CAAC,GAAE,MAAU,EACb,CAAC,GAAE,MAAU;IAGjB,QAAQ,IAAI,MAAM;IAIlB,iBAAiB,IAAI,qBAAqB;WAanC,cAAc,CAAC,KAAK,EAAE,GAAG,GAAG,OAAO;CAMpD"}

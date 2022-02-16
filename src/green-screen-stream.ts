@@ -1,4 +1,6 @@
-import { DR } from 'demolishedrenderer';
+import { Vector2 } from './models/vector2';
+import { VideoResolution } from './models/enums/video-resolution.enum';
+import { DemolishedRenderer } from './renderer/webgl/DemolishedRenderer';
 import quantize from 'quantize'
 
 import '@tensorflow/tfjs-backend-webgl';
@@ -10,10 +12,10 @@ import { IGreenScreenConfig } from './models/green-screen-config.interface';
 import { IMaskSettings, DEFAULT_MASK_SETTINGS, RGBA } from './models/masksettings.interface';
 import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
 import { ITextureSettings } from './models/texturesettings.interface';
-import { GreenScreenMethod } from './models/green-screen-method.enum';
+import { GreenScreenMethod } from './models/enums/green-screen-method.enum';
 import { getBodyPixMode } from './utils/get-bodypix-mode.util';
-import { asyncCall } from './utils/async-call.util';
 import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
+import { resolutionFromEnum } from './utils/resolution-from-enum.util';
 
 export class GreenScreenStream {
     isRendering: boolean;
@@ -26,10 +28,12 @@ export class GreenScreenStream {
     foregroundColor: RGBA;
     backgroundColor: RGBA;
     ctx: WebGLRenderingContext | WebGL2RenderingContext;
-    demolished: DR;
+    demolished: DemolishedRenderer;
     mediaStream: MediaStream;
     bodyPix: BodyPix;
     backgroundSource: HTMLImageElement | HTMLVideoElement;
+    resolution: Vector2
+
     private segmentConfig: any;
     private sourceVideo: HTMLVideoElement;
     private cameraSource: HTMLVideoElement | HTMLCanvasElement;
@@ -45,14 +49,14 @@ export class GreenScreenStream {
     canvas: HTMLCanvasElement
     modelLoaded: boolean;
 
-    constructor(public greenScreenMethod: GreenScreenMethod, public canvasEl?: HTMLCanvasElement, width: number = 640, height: number = 360) {
+    constructor(public greenScreenMethod: GreenScreenMethod,  resolution: VideoResolution | Vector2, public canvasEl?: HTMLCanvasElement) {
         this.mediaStream = new MediaStream();
-        if (canvasEl) 
+        if (canvasEl)
             this.canvas = canvasEl;
-        else 
-            this.canvas = document.createElement("canvas") as HTMLCanvasElement;
+        else
+            this.canvas = document.createElement("canvas");
 
-        this.canvas.width = width; this.canvas.height = height;
+        this.setCanvasResolution(resolution);
         if (greenScreenMethod !== GreenScreenMethod.VirtualBackgroundUsingGreenScreen)
             this.useML = true;
     }
@@ -66,30 +70,21 @@ export class GreenScreenStream {
      * @return {*}  {Promise<GreenScreenStream>}
      * @memberof GreenScreenStream
      */
-    public initialize(backgroundUrl?: string, config?: IGreenScreenConfig): Promise<GreenScreenStream> {
+    public async initialize(backgroundUrl: string, config?: IGreenScreenConfig): Promise<void> {
 
         this.setConfig(config?.maskSettings);
 
-        return new Promise<GreenScreenStream>(async (resolve, reject) => {
+        await this.setupRenderer(backgroundUrl);
 
-            let result = await asyncCall(this.setupRenderer(backgroundUrl));
-            if (result.error)
-                reject(result.error);
+        if (!this.demolished)
+            throw new Error(`No renderer created. Valid Background source must be provided.`);
+        if (!this.useML)
+            return;
 
-            if (!this.demolished)
-                reject(`No renderer created. Background source must be provided.`);
+        const model = await this.loadBodyPixModel(config);
 
-            if (!this.useML)
-                resolve(this);
-
-            const model = await asyncCall(this.loadBodyPixModel(config));
-            if (model.error)
-                reject(model.error);
-
-            this.bodyPix = model.result;
-            this.modelLoaded = true;
-            resolve(this);
-        });
+        this.bodyPix = model;
+        this.modelLoaded = true;
     }
 
     /**
@@ -103,7 +98,7 @@ export class GreenScreenStream {
         this.isRendering = true;
         const canvas = document.createElement("canvas");
         switch (this.greenScreenMethod) {
-            
+
             case GreenScreenMethod.VirtualBackground:
                 this.cameraSource = canvas;
                 this.renderVirtualBackground(0);
@@ -113,10 +108,10 @@ export class GreenScreenStream {
                 this.renderVirtualBackgroundGreenScreen(0);
                 break;
 
-            case GreenScreenMethod.Mask:
-                const ctx = canvas.getContext("2d");
-                this.renderMask(0, ctx);
-                break;
+            // case GreenScreenMethod.Mask:
+            //     const ctx = canvas.getContext("2d");
+            //     this.renderMask(0, ctx);
+            //     break;
         }
     }
 
@@ -164,9 +159,7 @@ export class GreenScreenStream {
                 }
                 this.sourceVideo.onerror = (err) => reject(err);
             }
-            catch (error) {
-                reject(error)
-            }
+            catch (error) { reject(error) }
         })
     }
 
@@ -182,38 +175,69 @@ export class GreenScreenStream {
     }
 
     /**
-     * Set the background
+     * Set the background to an image or video
      *
-     * @param {string} src
-     * @return {*}  {(Promise<HTMLImageElement | HTMLVideoElement | Error>)}
+     * @param {string} src the url to the resource
+     * @returns the created image / video object as promise
      * @memberof GreenScreenStream
      */
-    public setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error> {
-        return new Promise<HTMLImageElement | HTMLVideoElement | Error>((resolve, reject) => {
-            const isImage = src.match(/\.(jpeg|jpg|png)$/) !== null;
-            if (isImage) {
-                const bg = new Image();
-                bg.onerror = () => reject(new Error(`Unable to background image from ${src}`));
+    public setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement> {
+        const bIsImage = this.getIsImage(src);
+        let bg: HTMLImageElement | HTMLVideoElement;
 
-                bg.onload = () => {
-                    this.backgroundSource = bg;
+        return new Promise<HTMLImageElement | HTMLVideoElement>((resolve, reject) => {
+
+            if (bIsImage) {
+                bg = new Image();
+
+                bg.onerror = (error) => reject(new Error(`Unable to load background from ${src}\n${error}`));
+                bg.onload = async () => {
+                    bg = await this.scaleImageToCanvas(bg as HTMLImageElement);
                     resolve(bg);
                 }
-                bg.src = src;
             }
             else {
-                const bg = document.createElement("video");
+                bg = document.createElement("video");
+
                 bg.autoplay = true;
                 bg.loop = true;
-                bg.onerror = () => reject(new Error(`Unable to load background video from ${src}`));
-    
-                bg.onloadeddata = () => {
-                    this.backgroundSource = bg;
-                    resolve(bg);
-                }
-                bg.src = src;
+
+                bg.onerror = (error) => reject(new Error(`Unable to load background from  ${src}\n${error}`));
+                bg.onloadeddata = () => resolve(bg);           
             }
+            bg.src = src;
+            this.backgroundSource = bg;
         });
+    }
+
+    /**
+     * Scales the passed in image to canvas size and returns a scaled copy of it
+     * @param image 
+     * @param imageOptions Defaults to high quality and the size of the greenscreen canvas
+     */
+    public async scaleImageToCanvas(image: HTMLImageElement, imageOptions?: ImageBitmapOptions): Promise<HTMLImageElement> {
+
+        if(!imageOptions)
+            imageOptions = {
+                resizeWidth: this.canvas.width,
+                resizeHeight: this.canvas.height,
+                resizeQuality: 'high'
+            };
+
+        const imageBitmap = await createImageBitmap(image, imageOptions);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = imageBitmap.width;
+        canvas.height = imageBitmap.height;
+
+        const ctx = canvas.getContext('bitmaprenderer');
+        ctx.transferFromImageBitmap(imageBitmap);
+
+        const blob = await new Promise<Blob>(resolve => canvas.toBlob(resolve));
+
+        const scaledImage = new Image();
+        scaledImage.src = URL.createObjectURL(blob);
+        return scaledImage;
     }
 
     /**
@@ -251,7 +275,7 @@ export class GreenScreenStream {
      * @returns
      * @memberof GreenScreenStream
      */
-    public pallette(imageData: ImageData, pixelCount: number): [number, number,number][] | null {
+    public pallette(imageData: ImageData, pixelCount: number): [number, number, number][] | null {
         const pixelArray = this.pixelArray(imageData.data, pixelCount, 10);
         const cmap = quantize(pixelArray, 8);
         const palette = cmap ? cmap.palette() : null;
@@ -266,7 +290,7 @@ export class GreenScreenStream {
      * @param {number} b 0.0 - 1.0
      * @memberof GreenScreenStream
      */
-     public setChromaKey(r: number, g: number, b: number): void {
+    public setChromaKey(r: number, g: number, b: number): void {
         this.chromaKey.r = r;
         this.chromaKey.g = g;
         this.chromaKey.b = b;
@@ -274,7 +298,7 @@ export class GreenScreenStream {
 
     /**
      * Range is used to decide the amount of color to be used from either foreground or background.
-     * Playing with this variable will decide how much the foreground and background blend together.
+     * Changing these values will decide how much the foreground and background blend together.
      * @param {number} x
      * @param {number} y
      * @memberof GreenScreenStream
@@ -284,13 +308,17 @@ export class GreenScreenStream {
         this.maskRange.y = y;
     }
 
+    public flipStreamHorizontal() {
+        this.segmentConfig.flipHorizontal = !this.segmentConfig.flipHorizontal;
+    }
+
     /**
      * Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack
      *
      * @returns {{ palette: any, dominant: any }}
      * @memberof GreenScreenStream
      */
-    public getColorsFromStream(): { palette: [number, number,number][] | null, dominant: [number, number, number] } {
+    public getColorsFromStream(): { palette: [number, number, number][] | null, dominant: [number, number, number] } {
         let glCanvas = this.canvas;
         let tempCanvas = document.createElement("canvas");
         tempCanvas.width = glCanvas.width;
@@ -372,11 +400,11 @@ export class GreenScreenStream {
     private prepareRenderer(textureSettings: ITextureSettings): Promise<boolean | Error> {
         return new Promise<boolean | Error>(async (resolve, reject) => {
             try {
-                this.demolished = new DR(this.canvas as any, this.mainVert, this.mainFrag);
-                this.demolished.aA(
+                this.demolished = new DemolishedRenderer(this.canvas as any, this.mainVert, this.mainFrag);
+                this.demolished.addAssets(
                     textureSettings
                     , () => {
-                        this.demolished.aB(
+                        this.demolished.addBuffer(
                             "A",
                             this.mainVert,
                             this.bufferFrag,
@@ -426,11 +454,13 @@ export class GreenScreenStream {
     private renderVirtualBackgroundGreenScreen(t: number): void {
         if (!this.isRendering)
             return;
-        if (this.startTime == null) this.startTime = t;
+        if (this.startTime == null) 
+            this.startTime = t;
+
         const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
         if (seg > this.frame) {
             this.frame = seg;
-            this.demolished.R(t / 1000)
+            this.demolished.render(t / 1000)
         }
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackgroundGreenScreen(ts));
     }
@@ -443,7 +473,9 @@ export class GreenScreenStream {
     private async renderVirtualBackground(t: number): Promise<void> {
         if (!this.isRendering)
             return;
-        if (this.startTime == null) this.startTime = t;
+        if (this.startTime == null) 
+            this.startTime = t;
+
         const seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
 
         if (seg > this.frame && this.modelLoaded) {
@@ -459,30 +491,30 @@ export class GreenScreenStream {
                 this.flipHorizontal
             );
             this.frame = seg;
-            this.demolished.R(t / 1000);
+            this.demolished.render(t / 1000);
         }
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
     }
 
-    /**
-     * Renders using a mask
-     * @param t 
-     * @param ctx 
-     */
-    private async renderMask(t: number, ctx: CanvasRenderingContext2D): Promise<void> {
-        if (!this.isRendering)
-            return;
-        if (this.startTime == null) this.startTime = t;
-        let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-        if (seg > this.frame && this.modelLoaded) {
-            const result = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
-            const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
+    // /**
+    //  * Renders using a mask
+    //  * @param t 
+    //  * @param ctx 
+    //  */
+    // private async renderMask(t: number, ctx: CanvasRenderingContext2D): Promise<void> {
+    //     if (!this.isRendering)
+    //         return;
+    //     if (this.startTime == null) this.startTime = t;
+    //     let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
+    //     if (seg > this.frame && this.modelLoaded) {
+    //         const result = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
+    //         const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
 
-            ctx.putImageData(maskedImage, 0, 0);
-            this.demolished.R(t / 1000);
-        }
-        this.rafId = requestAnimationFrame((ts) => this.renderMask(ts, ctx));
-    }
+    //         ctx.putImageData(maskedImage, 0, 0);
+    //         this.demolished.R(t / 1000);
+    //     }
+    //     this.rafId = requestAnimationFrame((ts) => this.renderMask(ts, ctx));
+    // }
 
     /**
      * Applies the passed config or sets up a standard config when no config is provided
@@ -502,6 +534,17 @@ export class GreenScreenStream {
             maxDetections: config?.segmentPerson.maxDetections || defaults.segmentPerson.maxDetections,
             quantBytes: config?.segmentPerson.quantBytes || defaults.segmentPerson.quantBytes
         };
+    }
+
+    private setCanvasResolution(resolution: VideoResolution | Vector2) {
+        //Check if resolution is a vector2 (or a valid vector2 object literal)
+        if(resolution instanceof Vector2 || Vector2.isValidVector2(resolution)) 
+            this.resolution = resolution as Vector2;
+        else
+            this.resolution = resolutionFromEnum(resolution);
+
+        this.canvas.width = this.resolution.x;
+        this.canvas.height = this.resolution.y;
     }
 
     /**
@@ -531,12 +574,16 @@ export class GreenScreenStream {
             r = pixels[offset + 0];
             g = pixels[offset + 1];
             b = pixels[offset + 2];
-            a = pixels[offset + 3]
+            a = pixels[offset + 3];
             if (typeof a === 'undefined' || a >= 125)
                 if (!(r > 250 && g > 250 && b > 250))
                     pixelArray.push([r, g, b]);
         }
         return pixelArray;
+    }
+
+    private getIsImage(url: string): boolean {
+        return url.match(/\.(jpeg|jpg|gif|png)$/) !== null;
     }
     //#endregion
 }
