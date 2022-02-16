@@ -38,8 +38,8 @@ export class DemolishedRenderer {
         frameCount: number = 0;
         deltaTime: number = 0;
         
-        header: string =`
-        #version 300 es
+        header: string =
+        `#version 300 es
         #ifdef GL_ES
         precision highp float;
         precision highp int;

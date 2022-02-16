@@ -1,10 +1,12 @@
+import { Vector2 } from './models/vector2';
+import { VideoResolution } from './models/enums/video-resolution.enum';
 import { DemolishedRenderer } from './renderer/webgl/DemolishedRenderer';
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 import { BodyPix } from '@tensorflow-models/body-pix';
 import { IGreenScreenConfig } from './models/green-screen-config.interface';
 import { RGBA } from './models/masksettings.interface';
-import { GreenScreenMethod } from './models/green-screen-method.enum';
+import { GreenScreenMethod } from './models/enums/green-screen-method.enum';
 export declare class GreenScreenStream {
     greenScreenMethod: GreenScreenMethod;
     canvasEl?: HTMLCanvasElement;
@@ -22,6 +24,7 @@ export declare class GreenScreenStream {
     mediaStream: MediaStream;
     bodyPix: BodyPix;
     backgroundSource: HTMLImageElement | HTMLVideoElement;
+    resolution: Vector2;
     private segmentConfig;
     private sourceVideo;
     private cameraSource;
@@ -35,7 +38,7 @@ export declare class GreenScreenStream {
     maxFps: number;
     canvas: HTMLCanvasElement;
     modelLoaded: boolean;
-    constructor(greenScreenMethod: GreenScreenMethod, canvasEl?: HTMLCanvasElement, width?: number, height?: number);
+    constructor(greenScreenMethod: GreenScreenMethod, resolution: VideoResolution | Vector2, canvasEl?: HTMLCanvasElement);
     /**
      * Initalize
      * @param {string} [backgroundUrl]
@@ -74,13 +77,19 @@ export declare class GreenScreenStream {
      */
     captureStream(fps?: number): MediaStream;
     /**
-     * Set the background
+     * Set the background to an image or video
      *
-     * @param {string} src
-     * @return {*}  {(Promise<HTMLImageElement | HTMLVideoElement | Error>)}
+     * @param {string} src the url to the resource
+     * @returns the created image / video object as promise
      * @memberof GreenScreenStream
      */
-    setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement | Error>;
+    setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement>;
+    /**
+     * Scales the passed in image to canvas size and returns a scaled copy of it
+     * @param image
+     * @param imageOptions Defaults to high quality and the size of the greenscreen canvas
+     */
+    scaleImageToCanvas(image: HTMLImageElement, imageOptions?: ImageBitmapOptions): Promise<HTMLImageElement>;
     /**
      * Sets the provided BodyPixConfig or BodypixMode.
      * Can be used while rendering to switch out the currently used config.
@@ -166,6 +175,7 @@ export declare class GreenScreenStream {
      * Applies the passed config or sets up a standard config when no config is provided
      */
     private setConfig;
+    private setCanvasResolution;
     /**
      * Sets up the bodypix model either via custom config or a preset (mode).
      * If neither is provided, a default config is used.
@@ -173,5 +183,6 @@ export declare class GreenScreenStream {
      */
     private loadBodyPixModel;
     private pixelArray;
+    private getIsImage;
 }
 //# sourceMappingURL=green-screen-stream.d.ts.map
