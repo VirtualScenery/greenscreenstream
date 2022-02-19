@@ -1,5 +1,5 @@
  <p>
-  <a href="https://github.com/coloquium/greenscreenstream" target="blank"><img src="https://i.ibb.co/hmnR2jz/gss-v1.png" width="200" alt="GreenScreenStream Logo" /></a>
+  <a href="https://github.com/VirtualScenery" target="blank"><img src="https://i.ibb.co/hmnR2jz/gss-v1.png" width="200" alt="GreenScreenStream Logo" /></a>
 </p>
 <h1>
   GreenScreenStream
@@ -23,18 +23,18 @@ All rendering is done in realtime using a WebGL2 pixel shader (glsl) and optiona
 Below you find a few different examples of greenscreenstream.
 
 
- [ML based Virtual Background - Image Background](https://magnusthor.github.io/greenscreenstream-examples/example/mlWebGL/)
+ [ML based Virtual Background - Image Background](https://virtualscenery.github.io/greenscreenstream-examples/example/mlWebGL/)
 
- [ML based Virtual Background - Video Background](https://magnusthor.github.io/greenscreenstream-examples/example/mlWebGL#snow.mp4)
+ [ML based Virtual Background - Video Background](https://virtualscenery.github.io/greenscreenstream-examples/example/mlWebGL#snow.mp4)
  
- [ML based Virtual Background - WebGL Background](https://magnusthor.github.io/greenscreenstream-examples/example/procedual)
+ [ML based Virtual Background - WebGL Background](https://virtualscenery.github.io/greenscreenstream-examples/example/procedual)
 
- [ML based Virtual Background - Hologram Effect](https://magnusthor.github.io/greenscreenstream-examples/example/hologram)
+ [ML based Virtual Background - Hologram Effect](https://virtualscenery.github.io/greenscreenstream-examples/example/hologram)
 
- [https://magnusthor.github.io/greenscreenstream-examples/example/WebGL ](https://magnusthor.github.io/greenscreenstream-examples/example/WebGL)
+ [https://virtualscenery.github.io/greenscreenstream-examples/example/WebGL ](https://virtualscenery.github.io/greenscreenstream-examples/example/WebGL)
 
 
-> Look [here](https://github.com/MagnusThor/greenscreenstream-examples) for implementation. 
+> Look [here](https://github.com/VirtualScenery/greenscreenstream-examples) for implementation. 
 
 <br/>
 <br/>
