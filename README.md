@@ -16,7 +16,7 @@ All rendering is done in realtime using a WebGL2 pixel shader (glsl) and optiona
  
 ## Install
 
-    npm install greenscreenstream  
+    npm i @virtualscenery/greenscreenstream  
 
 ## Examples
 
