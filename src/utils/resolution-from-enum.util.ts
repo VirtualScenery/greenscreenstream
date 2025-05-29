@@ -1,6 +1,12 @@
-import { Vector2 } from './../models/vector2';
-import { VideoResolution } from './../models/enums/video-resolution.enum';
+import { VideoResolution } from '../models/enums/video-resolution.enum';
+import { Vector2 } from '../models/vector2';
 
+/**
+ * Returns the pixel dimensions as a `Vector2` corresponding to the given `VideoResolution` enum value.
+ *
+ * @param videoResolution - The video resolution enum value to convert.
+ * @returns A `Vector2` representing the width and height in pixels for the specified resolution.
+ */
 export function resolutionFromEnum(videoResolution: VideoResolution): Vector2 {
     let resolution: Vector2;
 

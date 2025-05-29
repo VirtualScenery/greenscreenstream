@@ -1,22 +1,68 @@
-import { Vector2 } from './models/vector2';
-import { VideoResolution } from './models/enums/video-resolution.enum';
-import { DemolishedRenderer } from './renderer/webgl/DemolishedRenderer';
-import quantize from 'quantize'
-
 import '@tensorflow/tfjs-backend-webgl';
-import '@tensorflow/tfjs-backend-cpu'
-import * as BODY_PIX from '@tensorflow-models/body-pix';
-import { BodyPix, load } from '@tensorflow-models/body-pix';
+import '@tensorflow/tfjs-backend-cpu';
 
-import { IGreenScreenConfig } from './models/green-screen-config.interface';
-import { IMaskSettings, DEFAULT_MASK_SETTINGS, RGBA } from './models/masksettings.interface';
-import { BUFFER_FRAG, BUFFER_VERT, MAIN_FRAG, MAIN_VERT } from './models/glsl-constants';
-import { ITextureSettings } from './models/texturesettings.interface';
-import { GreenScreenMethod } from './models/enums/green-screen-method.enum';
-import { getBodyPixMode } from './utils/get-bodypix-mode.util';
+import quantize from 'quantize';
+
+import * as BODY_PIX from '@tensorflow-models/body-pix';
+import {
+  BodyPix,
+  load,
+} from '@tensorflow-models/body-pix';
 import { ModelConfig } from '@tensorflow-models/body-pix/dist/body_pix_model';
+
+import { GreenScreenMethod } from './models/enums/green-screen-method.enum';
+import { VideoResolution } from './models/enums/video-resolution.enum';
+import {
+  BUFFER_FRAG,
+  BUFFER_VERT,
+  MAIN_FRAG,
+  MAIN_VERT,
+} from './models/glsl-constants';
+import { IGreenScreenConfig } from './models/green-screen-config.interface';
+import {
+  DEFAULT_MASK_SETTINGS,
+  IMaskSettings,
+  RGBA,
+} from './models/masksettings.interface';
+import { ITextureSettings } from './models/texturesettings.interface';
+import { Vector2 } from './models/vector2';
+import { DemolishedRenderer } from './renderer/webgl/DemolishedRenderer';
+import { getBodyPixMode } from './utils/get-bodypix-mode.util';
 import { resolutionFromEnum } from './utils/resolution-from-enum.util';
 
+/**
+ * The `GreenScreenStream` class provides a virtual background solution for video streams,
+ * supporting both chroma key (green screen) and machine learning-based background segmentation.
+ * It manages video sources, background images or videos, and rendering via WebGL, and can output
+ * the processed stream as a MediaStream suitable for use in web applications.
+ *
+ * Features:
+ * - Supports chroma key (green screen) and ML-based segmentation (BodyPix).
+ * - Allows dynamic background replacement with images or videos.
+ * - Provides methods to start/stop rendering, add video tracks, and capture the output stream.
+ * - Offers color analysis utilities (dominant color, palette extraction).
+ * - Configurable mask, chroma key, and rendering settings.
+ * - Integrates with WebGL for efficient real-time compositing.
+ *
+ * Usage:
+ * 1. Instantiate with the desired green screen method and resolution.
+ * 2. Call `initialize()` with a background source and optional configuration.
+ * 3. Add a video track (e.g., from a webcam) using `addVideoTrack()`.
+ * 4. Start rendering with `start()`.
+ * 5. Capture the processed stream via `captureStream()`.
+ * 6. Stop rendering with `stop()`.
+ *
+ * @example
+ * ```typescript
+ * const gss = new GreenScreenStream(GreenScreenMethod.VirtualBackground, { x: 1280, y: 720 });
+ * await gss.initialize('background.jpg');
+ * await gss.addVideoTrack(webcamTrack);
+ * gss.start();
+ * const outputStream = gss.captureStream();
+ * ```
+ *
+ * @public
+ */
 export class GreenScreenStream {
     isRendering: boolean;
     frame: number = -1;
@@ -49,6 +95,15 @@ export class GreenScreenStream {
     canvas: HTMLCanvasElement
     modelLoaded: boolean;
 
+    /**
+     * Constructs a new instance of the green screen stream handler.
+     *
+     * @param greenScreenMethod - The method to use for green screen processing.
+     * @param resolution - The desired video resolution or a vector specifying width and height.
+     * @param canvasEl - (Optional) An existing HTMLCanvasElement to use for rendering. If not provided, a new canvas will be created.
+     *
+     * Initializes the media stream and canvas, sets the canvas resolution, and determines whether to use machine learning-based background removal based on the selected green screen method.
+     */
     constructor(public greenScreenMethod: GreenScreenMethod,  resolution: VideoResolution | Vector2, public canvasEl?: HTMLCanvasElement) {
         this.mediaStream = new MediaStream();
         if (canvasEl)
@@ -64,10 +119,12 @@ export class GreenScreenStream {
     //#region Public Methods
 
     /**
-     * Initalize 
-     * @param {string} [backgroundUrl]
-     * @param {MaskSettings} [config]
-     * @return {*}  {Promise<GreenScreenStream>}
+     * Initializes the green screen stream with a background source and optional configuration.
+     *
+     * @param {string} backgroundUrl - The URL of the background image or video to use.
+     * @param {IGreenScreenConfig} [config] - Optional configuration settings for the green screen.
+     * @returns {Promise<void>} A promise that resolves when the initialization is complete.
+     * @throws {Error} If no renderer is created or if the background source is invalid.
      * @memberof GreenScreenStream
      */
     public async initialize(backgroundUrl: string, config?: IGreenScreenConfig): Promise<void> {
@@ -88,11 +145,12 @@ export class GreenScreenStream {
     }
 
     /**
-     * Start render
+     * Start the rendering process with an optional maximum frames per second (maxFps).
+     * If maxFps is not provided, defaults to 25.
      *
-     * @param {number} [maxFps] maximum frame rate, defaults to 25fps
+     * @param {number} [maxFps] - The maximum frames per second for rendering.
      * @memberof GreenScreenStream
-     */
+     */    
     public start(maxFps?: number): void {
         this.maxFps = maxFps || 25;
         this.isRendering = true;
@@ -108,16 +166,13 @@ export class GreenScreenStream {
                 this.renderVirtualBackgroundGreenScreen(0);
                 break;
 
-            // case GreenScreenMethod.Mask:
-            //     const ctx = canvas.getContext("2d");
-            //     this.renderMask(0, ctx);
-            //     break;
         }
     }
 
     /**
-     * Stop renderer 
-     * @param {boolean} [stopMediaStreams] 
+     * Stops the rendering process and optionally stops the media streams.
+     *
+     * @param {boolean} [stopMediaStreams=true] - Whether to stop the media streams (default is true).
      * @memberof GreenScreenStream
      */
     public stop(stopMediaStreams?: boolean): void {
@@ -136,12 +191,13 @@ export class GreenScreenStream {
     }
 
     /**
-     * Add a MediaStreamTrack track (i.e webcam )
+     * Adds a video track to the media stream and sets up the source video element.
      *
-     * @param {MediaStreamTrack} track
-     * @return {*}  {Promise<void|any>}
+     * @param {MediaStreamTrack} track - The video track to add.
+     * @returns {Promise<void | any>} A promise that resolves when the track is added and the source video is ready.
      * @memberof GreenScreenStream
      */
+   
     public addVideoTrack(track: MediaStreamTrack): Promise<void | any> {
         return new Promise<void>((resolve, reject) => {
             try {
@@ -164,23 +220,27 @@ export class GreenScreenStream {
     }
 
     /**
-     * Capture the rendered result to a MediaStream
+     * Captures the current state of the canvas as a MediaStream.
+     * Optionally, you can specify the frames per second (fps) for the captured stream.
      *
-     * @param {number} [fps]
-     * @returns {MediaStream}
+     * @param {number} [fps=25] - The frames per second for the captured stream (default is 25).
+     * @returns {MediaStream} The captured MediaStream from the canvas.
      * @memberof GreenScreenStream
      */
+  
     public captureStream(fps?: number): MediaStream {
         return this.canvas["captureStream"](fps || 25) as MediaStream;
     }
 
     /**
-     * Set the background to an image or video
+     * Sets the background image or video for the green screen.
+     * Returns a promise that resolves with the loaded background element (HTMLImageElement or HTMLVideoElement).
      *
-     * @param {string} src the url to the resource
-     * @returns the created image / video object as promise
+     * @param {string} src - The source URL of the background image or video.
+     * @returns {Promise<HTMLImageElement | HTMLVideoElement>} A promise that resolves with the loaded background element.
      * @memberof GreenScreenStream
      */
+
     public setBackground(src: string): Promise<HTMLImageElement | HTMLVideoElement> {
         const bIsImage = this.getIsImage(src);
         let bg: HTMLImageElement | HTMLVideoElement;
@@ -211,10 +271,15 @@ export class GreenScreenStream {
     }
 
     /**
-     * Scales the passed in image to canvas size and returns a scaled copy of it
-     * @param image 
-     * @param imageOptions Defaults to high quality and the size of the greenscreen canvas
+     * Scales the provided image to fit the canvas dimensions.
+     * Returns a promise that resolves with the scaled HTMLImageElement.
+     *
+     * @param {HTMLImageElement} image - The image to scale.
+     * @param {ImageBitmapOptions} [imageOptions] - Optional options for creating the image bitmap.
+     * @returns {Promise<HTMLImageElement>} A promise that resolves with the scaled image.
+     * @memberof GreenScreenStream
      */
+    
     public async scaleImageToCanvas(image: HTMLImageElement, imageOptions?: ImageBitmapOptions): Promise<HTMLImageElement> {
 
         if(!imageOptions)
@@ -241,11 +306,14 @@ export class GreenScreenStream {
     }
 
     /**
-     * Sets the provided BodyPixConfig or BodypixMode.
-     * Can be used while rendering to switch out the currently used config.
-     * Expect a few seconds of freezed image while the new model is loading.
-     * @param config 
+     * Sets the BodyPix model for machine learning-based background removal.
+     * Loads the model based on the provided configuration or uses a default configuration.
+     *
+     * @param {IGreenScreenConfig} config - The configuration for the BodyPix model.
+     * @returns {Promise<void>} A promise that resolves when the model is loaded and ready.
+     * @memberof GreenScreenStream
      */
+  
     public async setBodyPixModel(config: IGreenScreenConfig): Promise<void> {
         const model = await this.loadBodyPixModel(config);
 
@@ -254,13 +322,14 @@ export class GreenScreenStream {
     }
 
     /**
-     *  Get the dominant color from the imageData provided
+     * Get the most dominant color in the imageData provided
      *
      * @param {ImageData} imageData
      * @param {number} pixelCount
-     * @returns
+     * @returns {[number, number, number]} The dominant color as an RGB array.
      * @memberof GreenScreenStream
      */
+  
     public dominant(imageData: ImageData, pixelCount: number): [number, number, number] {
         const p = this.pallette(imageData, pixelCount);
         const d = p[0];
@@ -268,13 +337,14 @@ export class GreenScreenStream {
     };
 
     /**
-     * Get a pallette (10) of the most used colors in the imageData provided
+     * Get a palette of the most common colors in the imageData provided
      *
      * @param {ImageData} imageData
      * @param {number} pixelCount
-     * @returns
+     * @returns {[number, number, number][] | null} An array of RGB color arrays representing the palette.
      * @memberof GreenScreenStream
      */
+  
     public pallette(imageData: ImageData, pixelCount: number): [number, number, number][] | null {
         const pixelArray = this.pixelArray(imageData.data, pixelCount, 10);
         const cmap = quantize(pixelArray, 8);
@@ -283,11 +353,12 @@ export class GreenScreenStream {
     };
 
     /**
-     * Set the color to be removed
-     * i.e (0.05,0.63,0.14)
-     * @param {number} r  0.0 - 1.0
-     * @param {number} g 0.0 - 1.0
-     * @param {number} b 0.0 - 1.0
+     * Sets the chroma key color used for green screen processing.
+     * The chroma key color is specified as RGB values.
+     *
+     * @param {number} r - The red component of the chroma key color (0-255).
+     * @param {number} g - The green component of the chroma key color (0-255).
+     * @param {number} b - The blue component of the chroma key color (0-255).
      * @memberof GreenScreenStream
      */
     public setChromaKey(r: number, g: number, b: number): void {
@@ -296,28 +367,40 @@ export class GreenScreenStream {
         this.chromaKey.b = b;
     }
 
+
     /**
-     * Range is used to decide the amount of color to be used from either foreground or background.
-     * Changing these values will decide how much the foreground and background blend together.
-     * @param {number} x
-     * @param {number} y
+     * Sets the mask range for the green screen processing.
+     * The mask range is specified as a vector with x and y components.
+     *
+     * @param {number} x - The x component of the mask range.
+     * @param {number} y - The y component of the mask range.
      * @memberof GreenScreenStream
      */
+ 
     public setMaskRange(x: number, y: number): void {
         this.maskRange.x = x;
         this.maskRange.y = y;
     }
 
+    /**
+     * Flips the video stream horizontally.
+     * Toggles the `flipHorizontal` property in the segment configuration.
+     *
+     * @memberof GreenScreenStream
+     */
     public flipStreamHorizontal() {
         this.segmentConfig.flipHorizontal = !this.segmentConfig.flipHorizontal;
     }
 
     /**
-     * Get the most dominant color and a list (palette) of the colors most common in the provided MediaStreamTrack
+     * Retrieves the color palette and dominant color from the current video stream.
+     * This method captures the current frame from the video source, processes it,
+     * and returns an object containing the color palette and dominant color.
      *
-     * @returns {{ palette: any, dominant: any }}
+     * @returns {{ palette: [number, number, number][] | null, dominant: [number, number, number] }} An object containing the color palette and dominant color.
      * @memberof GreenScreenStream
      */
+  
     public getColorsFromStream(): { palette: [number, number, number][] | null, dominant: [number, number, number] } {
         let glCanvas = this.canvas;
         let tempCanvas = document.createElement("canvas");
@@ -339,13 +422,13 @@ export class GreenScreenStream {
     //#region Private Methods
 
     /**
-     * Set up the rendering, texturesx etc.
+     * Sets up the WebGL renderer with the specified background URL.
+     * Returns a promise that resolves when the renderer is successfully set up.
      *
-     * @private
-     * @param {string} [backgroundUrl]
-     * @return {*}  {Promise<boolean | Error>}
-     * @memberof GreenScreenStream
-     */
+     * @param {string} backgroundUrl - The URL of the background image or video to use.
+     * @returns {Promise<boolean | Error>} A promise that resolves with true if setup is successful, or an error if it fails.
+     */ 
+
     private setupRenderer(backgroundUrl: string): Promise<boolean | Error> {
         return new Promise<boolean | Error>(async (resolve, reject) => {
             this.ctx = this.canvas.getContext("webgl2");
@@ -363,8 +446,13 @@ export class GreenScreenStream {
     }
 
     /**
-     * Get the necessary texture settings
+     * Returns the texture settings for the WebGL renderer.
+     * These settings define how the background and webcam textures are handled.
+     *
+     * @returns {ITextureSettings} An object containing texture settings for background and webcam.
      */
+
+
     private getTextureSettings(): ITextureSettings {
         return {
             "background": {
@@ -394,9 +482,13 @@ export class GreenScreenStream {
     }
 
     /**
-     * Instantiates & prepares the demolishedRenderer 
-     * @param textureSettings
+     * Prepares the WebGL renderer with the specified texture settings.
+     * This method initializes the DemolishedRenderer and adds assets and buffers for rendering.
+     *
+     * @param {ITextureSettings} textureSettings - The texture settings for the renderer.
+     * @returns {Promise<boolean | Error>} A promise that resolves with true if preparation is successful, or an error if it fails.
      */
+   
     private prepareRenderer(textureSettings: ITextureSettings): Promise<boolean | Error> {
         return new Promise<boolean | Error>(async (resolve, reject) => {
             try {
@@ -448,9 +540,13 @@ export class GreenScreenStream {
     }
 
     /**
-    * Renders a virtual background using a greenscreen
-    * @param t 
-    */
+     * Renders a virtual background using a green screen effect.
+     * This method uses the DemolishedRenderer to apply the green screen effect
+     * based on the current video frame and background.
+     *
+     * @param t - The current timestamp in milliseconds.
+     */
+
     private renderVirtualBackgroundGreenScreen(t: number): void {
         if (!this.isRendering)
             return;
@@ -466,8 +562,11 @@ export class GreenScreenStream {
     }
 
     /**
-     * Renders a virtual background using ML
-     * @param t 
+     * Renders the virtual background using BodyPix segmentation.
+     * This method segments the person in the video and applies a mask to create a virtual background effect.
+     *
+     * @param {number} t - The current timestamp in milliseconds for rendering.
+     * @returns {Promise<void>} A promise that resolves when the rendering is complete.
      */
 
     private async renderVirtualBackground(t: number): Promise<void> {
@@ -496,29 +595,13 @@ export class GreenScreenStream {
         this.rafId = requestAnimationFrame((ts) => this.renderVirtualBackground(ts));
     }
 
-    // /**
-    //  * Renders using a mask
-    //  * @param t 
-    //  * @param ctx 
-    //  */
-    // private async renderMask(t: number, ctx: CanvasRenderingContext2D): Promise<void> {
-    //     if (!this.isRendering)
-    //         return;
-    //     if (this.startTime == null) this.startTime = t;
-    //     let seg = Math.floor((t - this.startTime) / (1000 / this.maxFps));
-    //     if (seg > this.frame && this.modelLoaded) {
-    //         const result = await this.bodyPix.segmentPerson(this.sourceVideo, this.segmentConfig);
-    //         const maskedImage = BODY_PIX.toMask(result, this.foregroundColor, this.backgroundColor);
-
-    //         ctx.putImageData(maskedImage, 0, 0);
-    //         this.demolished.R(t / 1000);
-    //     }
-    //     this.rafId = requestAnimationFrame((ts) => this.renderMask(ts, ctx));
-    // }
-
     /**
-     * Applies the passed config or sets up a standard config when no config is provided
+     * Sets the configuration for the green screen mask settings.
+     * This method updates the properties of the class based on the provided configuration.
+     *
+     * @param {IMaskSettings} [config] - The configuration settings for the mask.
      */
+
     private setConfig(config?: IMaskSettings): void {
         const defaults = DEFAULT_MASK_SETTINGS;
         this.opacity = config?.opacity || defaults.opacity;
@@ -536,6 +619,14 @@ export class GreenScreenStream {
         };
     }
 
+    /**
+     * Sets the resolution of the canvas based on the provided resolution parameter.
+     * If the resolution is a Vector2 or a valid object literal, it sets the width and height accordingly.
+     * Otherwise, it converts the VideoResolution enum to a Vector2 and sets the canvas dimensions.
+     *
+     * @param {VideoResolution | Vector2} resolution - The desired video resolution or a Vector2 object.
+     */
+
     private setCanvasResolution(resolution: VideoResolution | Vector2) {
         //Check if resolution is a vector2 (or a valid vector2 object literal)
         if(resolution instanceof Vector2 || Vector2.isValidVector2(resolution)) 
@@ -548,10 +639,13 @@ export class GreenScreenStream {
     }
 
     /**
-     * Sets up the bodypix model either via custom config or a preset (mode).
-     * If neither is provided, a default config is used.
-     * @param config 
-     */
+     * Loads the BodyPix model based on the provided configuration or default settings.
+     * If a BodyPix configuration is provided, it uses that; otherwise, it retrieves the model based on the green screen mode.
+     *
+     * @param {IGreenScreenConfig} config - The configuration for the green screen, which may include BodyPix settings.
+     * @returns {Promise<BodyPix>} A promise that resolves with the loaded BodyPix model.
+     */ 
+    
     private async loadBodyPixModel(config: IGreenScreenConfig) {
         let bodyPixMode: ModelConfig;
 
@@ -567,9 +661,18 @@ export class GreenScreenStream {
         return load(bodyPixMode);
     }
 
+    /**
+     * Extracts pixel data from the provided pixel array, filtering out pixels based on quality and alpha value.
+     * Returns an array of RGB color values for the pixels that meet the criteria.
+     *
+     * @param {any} pixels - The pixel data array (typically from an ImageData object).
+     * @param {number} pixelCount - The total number of pixels to process.
+     * @param {number} quality - The quality factor to reduce the number of pixels processed.
+     * @returns {Array<number>} An array of RGB color values for the filtered pixels.
+     */ 
     private pixelArray(pixels: any, pixelCount: number, quality: number): Array<number> {
         const pixelArray = [];
-        for (let i = 0, offset, r, g, b, a; i < pixelCount; i = i + quality) {
+        for (let i = 0, offset: number, r: number, g: number, b: number, a: number; i < pixelCount; i = i + quality) {
             offset = i * 4;
             r = pixels[offset + 0];
             g = pixels[offset + 1];

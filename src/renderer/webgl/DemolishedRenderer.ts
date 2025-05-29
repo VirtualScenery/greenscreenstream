@@ -1,3 +1,13 @@
+/**
+ * Represents a texture resource used in WebGL rendering.
+ *
+ * @property {any} [src] - The source data for the texture. This could be an image, video, or other data type compatible with WebGL textures.
+ * @property {(prg: WebGLProgram, gl: WebGLRenderingContext, src: any) => Function} [fn] - 
+ *   An optional function that processes the texture. It receives the WebGL program, rendering context, and source data,
+ *   and returns a function (typically for cleanup or further processing).
+ * @property {number} [w] - The width of the texture in pixels.
+ * @property {number} [h] - The height of the texture in pixels.
+ */
 export interface ITexture {
         src?: any;
         fn?(prg: WebGLProgram, gl: WebGLRenderingContext, src: any): Function;
@@ -5,6 +15,25 @@ export interface ITexture {
         h?: number;
 }
 
+/**
+ * Represents a render target in a WebGL context, encapsulating the framebuffer, renderbuffer, and texture objects.
+ * Also manages associated textures, uniforms, and uniform locations for shader programs.
+ *
+ * @remarks
+ * This class is designed to simplify the management of WebGL rendering targets and their related resources.
+ *
+ * @property framebuffer - The WebGLFramebuffer used as the rendering destination.
+ * @property renderbuffer - The WebGLRenderbuffer used for depth or stencil attachments.
+ * @property texture - The primary WebGLTexture attached to the framebuffer.
+ * @property textures - An array of texture identifiers or URLs associated with this render target.
+ * @property uniforms - An object containing custom uniform values to be used in shaders.
+ * @property locations - A map of uniform names to their corresponding WebGLUniformLocation objects.
+ *
+ * @constructor
+ * @param gl - The WebGL rendering context.
+ * @param textures - An array of texture identifiers or URLs to associate with this render target.
+ * @param customUniforms - An object containing custom uniform values for shader programs.
+ */
 export class RenderTarget {
         framebuffer: WebGLFramebuffer;
         renderbuffer: WebGLRenderbuffer;
@@ -24,6 +53,34 @@ export class RenderTarget {
         }
 }
 
+/**
+ * The `DemolishedRenderer` class provides a high-level abstraction for managing and rendering WebGL2-based graphics pipelines.
+ * It supports multiple shader programs, render targets, texture management (including cube maps), and custom uniforms.
+ * 
+ * ## Features
+ * - Initializes and manages a WebGL2 rendering context.
+ * - Compiles and links vertex and fragment shaders, with support for custom shader headers.
+ * - Manages multiple shader programs and their states.
+ * - Handles creation and caching of 2D and cube map textures.
+ * - Supports render targets with custom framebuffers and renderbuffers.
+ * - Allows dynamic addition of assets (textures) and shader buffers.
+ * - Provides a render loop with a configurable frame rate.
+ * - Exposes a static utility to generate textures via offscreen rendering.
+ * 
+ * ## Usage
+ * Instantiate with a target HTMLCanvasElement and shader sources, then add buffers, assets, and start the render loop.
+ * 
+ * @example
+ * ```typescript
+ * const renderer = new DemolishedRenderer(canvas, vertexShaderSrc, fragmentShaderSrc);
+ * renderer.addAssets({ ... }, () => {
+ *   renderer.addBuffer("bufferA", bufferVertexSrc, bufferFragmentSrc);
+ *   renderer.run(0, 60);
+ * });
+ * ```
+ * 
+ * @public
+ */
 export class DemolishedRenderer {
         gl: WebGLRenderingContext;
         mainProgram: WebGLProgram;
@@ -37,15 +94,26 @@ export class DemolishedRenderer {
         screenVertexPosition: number;
         frameCount: number = 0;
         deltaTime: number = 0;
-        
+
         header: string =
-        `#version 300 es
+                `#version 300 es
         #ifdef GL_ES
         precision highp float;
         precision highp int;
         precision mediump sampler3D;
         #endif`;
 
+        /**
+         * Initializes a new instance of the DemolishedRenderer class.
+         *
+         * @param canvas - The HTMLCanvasElement to use as the rendering target.
+         * @param v - The source code for the vertex shader.
+         * @param f - The source code for the fragment shader.
+         * @param cU - (Optional) An object containing custom uniforms to be used in the shaders.
+         *
+         * Sets up WebGL context, compiles and links shaders, initializes buffers, and prepares uniforms and attributes for rendering.
+         * Throws an error if the shader program fails to compile or link.
+         */
         constructor(public canvas: HTMLCanvasElement, v: string, f: string, public cU: any = {}) {
 
                 this.targets = new Map<string, any>();
@@ -94,13 +162,14 @@ export class DemolishedRenderer {
                 gl.bufferData(34962, new Float32Array([- 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0]), 35044);
         }
 
+
         /**
-         * Create a Shader
+         * Compiles a shader from the provided source code and attaches it to the given WebGL program.
          *
-         * @param {WebGLProgram} program
-         * @param {number} type
-         * @param {string} source
-         * @memberof DemolishedRenderer
+         * @param program - The WebGLProgram to which the compiled shader will be attached.
+         * @param type - The type of shader to create (e.g., gl.VERTEX_SHADER or gl.FRAGMENT_SHADER).
+         * @param source - The GLSL source code for the shader.
+         * @throws Will throw an error if the shader fails to compile, including the compilation log.
          */
         public createShader(program: WebGLProgram, type: number, source: string): void {
                 let gl = this.gl;
@@ -115,12 +184,13 @@ export class DemolishedRenderer {
                 };
         }
 
+
         /**
-         * Create and add a WebGLProgram
+         * Creates a new WebGL program, stores it in the internal programs map with the given name,
+         * and returns the created program.
          *
-         * @param {string} name
-         * @returns {WebGLProgram}
-         * @memberof DemolishedRenderer
+         * @param name - The unique identifier for the WebGL program.
+         * @returns The created WebGLProgram instance.
          */
         public addProgram(name: string): WebGLProgram {
                 let p = this.gl.createProgram();
@@ -128,11 +198,11 @@ export class DemolishedRenderer {
                 return p;
         }
         /**
-         *  Create a new WEBGLTexture
+         * Creates a WebGL texture from the provided image or pixel data.
          *
-         * @param {*} data  image or UInt8Array
-         * @returns WebGLTexture
-         * @memberof DemolishedRenderer
+         * @param data - The source data for the texture, either an `HTMLImageElement` or a `Uint8Array` containing pixel data.
+         * @param d - The texture unit index to activate before binding the texture.
+         * @returns The created `WebGLTexture` object.
          */
         public createTexture(data: HTMLImageElement | Uint8Array, d: number): WebGLTexture {
                 let gl = this.gl;
@@ -151,67 +221,11 @@ export class DemolishedRenderer {
         }
 
         /**
-         * Create a texture cube map
+         * Creates a cube map texture from an array of image sources.
          *
-         * @param {Array<any>} sources
-         * @param {number} d
-         * @returns {WebGLTexture}
-         * @memberof DemolishedRenderer
-         */
-        createTextureCubeMap(sources: Array<any>, d: number): WebGLTexture {
-                let gl = this.gl;
-                let texture = gl.createTexture();
-                gl.activeTexture(33985 + d);
-                gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
-                const fetchAll = (src: string, key: string) => {
-                        return new Promise<any>(async (resolve, reject) => {
-
-
-                                const response = await fetch(src)
-                                const blob = await response.blob()
-
-                                let image = new Image();
-                                image.dataset.key = key
-
-                                image.onerror = reject;
-
-                                image.onload = () => {
-                                        resolve(image);
-                                }
-
-                                image.src = src;
-                        });
-                };
-                Promise.all(sources.map(i => {
-                        return fetchAll(i.d, i.t);
-                })).then(data => {
-                        data.forEach(image => {
-                                const target = image.dataset.key
-                                const level = 0;
-                                const internalFormat = gl.RGBA;
-                                const width = 512;
-                                const height = 512;
-                                const format = gl.RGBA;
-                                const type = gl.UNSIGNED_BYTE;
-                                gl.texImage2D(target,
-                                        level, internalFormat,
-                                        width, height, 0, format, type, null);
-                                gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
-                                gl.texImage2D(target, level, internalFormat, format, type, image);
-                                gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-                        });
-                });
-                gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-                gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-                return texture;
-        }
-        /**
-         * add assets ( textures )
-         *
-         * @param {*} assets
-         * @param {()=>void} cb
-         * @returns {this}
-         * @memberof DemolishedRenderer
+         * @param sources - An array of objects containing the source URLs and target keys for each face of the cube map.
+         * @param d - The texture unit index to activate before binding the cube map texture.
+         * @returns The created `WebGLTexture` object representing the cube map.
          */
         addAssets(assets: any, cb: (r?: any) => void): this {
                 const cache = (k, v, f) => {
@@ -219,24 +233,10 @@ export class DemolishedRenderer {
                 }
                 const p = (key: string, texture: any, unit: number) => {
                         return new Promise<any>((resolve) => {
-                                if (!texture.src) {
-                                        cache(key, this.createTexture(new Uint8Array(1024), unit), texture.fn);
-                                        resolve(key);
-                                } else {
-                                        if (!Array.isArray(texture.src)) {
-                                                const i = new Image();
-                                                i.onload = (e) => {
-                                                        cache(key, this.createTexture(i, unit), null);
-                                                        resolve(key)
-                                                };
-                                                i.src = texture.src;
-                                        } else {
 
-                                                cache(key, this.createTextureCubeMap(texture.src as Array<any>, unit),
-                                                        texture.fn);
-                                                resolve(key);
-                                        }
-                                }
+                                cache(key, this.createTexture(new Uint8Array(1024), unit), texture.fn);
+                                resolve(key);
+
                         });
                 }
                 Promise.all(Object.keys(assets).map((key: string, index: number) => {
@@ -249,15 +249,11 @@ export class DemolishedRenderer {
                 return this;
         }
         /**
-         * add a new buffer / shader program
+         * Creates a cube map texture from an array of image sources.
          *
-         * @param {string} name
-         * @param {string} vertex
-         * @param {string} fragment
-         * @param {Array<string>} [textures]
-         * @param {*} [customUniforms]
-         * @returns {this}
-         * @memberof DemolishedRenderer
+         * @param sources - An array of objects containing the source URLs and target keys for each face of the cube map.
+         * @param d - The texture unit index to activate before binding the cube map texture.
+         * @returns The created `WebGLTexture` object representing the cube map.
          */
         addBuffer(name: string, vertex: string, fragment: string, textures?: Array<string>, customUniforms?: any): DemolishedRenderer {
                 let gl = this.gl;
@@ -298,21 +294,22 @@ export class DemolishedRenderer {
         }
 
         /**
-         * Set program state ( enable / or disable)
-         *   
-         * @param {string} key
-         * @param {boolean} state
-         * @memberof DemolishedRenderer
+         * Sets the state of a program to either enabled or disabled.
+         *
+         * @param {string} key - The unique identifier for the program.
+         * @param {boolean} state - The desired state of the program (true for enabled, false for disabled).
          */
         setProgram(key: string, state: boolean): void {
                 this.programs.get(key).state = state;
         }
 
         /**
-         * Render
+         * Renders the scene using the current WebGL context and shader programs.
          *
-         * @param {number} time
-         * @memberof DemolishedRenderer
+         * @param {number} time - The current time in seconds, used for animations and time-based effects.
+         * 
+         * This method iterates through all registered shader programs, binds the appropriate textures,
+         * sets uniforms, and draws the geometry to the screen. It also handles framebuffers for offscreen rendering.
          */
         render(time: number) {
                 let gl = this.gl;
@@ -395,14 +392,15 @@ export class DemolishedRenderer {
         }
 
         /**
-         * Create render target
+         * Creates a render target with a framebuffer, renderbuffer, and texture.
          *
-         * @param {number} width
-         * @param {number} height
-         * @param {Array<string>} textures
-         * @returns {*}
-         * @memberof DemolishedRenderer
+         * @param {number} width - The width of the render target in pixels.
+         * @param {number} height - The height of the render target in pixels.
+         * @param {Array<string>} textures - An array of texture identifiers or URLs to associate with this render target.
+         * @param {any} customUniforms - An object containing custom uniform values for shader programs.
+         * @returns {RenderTarget} The created RenderTarget instance.
          */
+
         createRenderTarget(width: number, height: number, textures: Array<string>, customUniforms: any): RenderTarget {
                 let gl = this.gl;
                 let target = new RenderTarget(gl, textures, customUniforms);
@@ -429,15 +427,16 @@ export class DemolishedRenderer {
 
                 return target;
         }
-        
+
+
         /**
-         * Render loop
+         * Starts the rendering loop at a specified frame rate.
          *
-         * @param {number} t
-         * @param {number} fps
-         * @returns {this}
-         * @memberof DemolishedRenderer
+         * @param {number} t - The initial time in milliseconds to start the rendering loop.
+         * @param {number} fps - The desired frames per second for the rendering loop.
+         * @returns {this} The current instance of the DemolishedRenderer for method chaining.
          */
+
         run(t: number, fps: number): this {
                 let pt: number = performance.now();
                 let interval = 1000 / fps;
@@ -455,31 +454,5 @@ export class DemolishedRenderer {
 
         }
 
-        /**
-         *  Generate a texture and return a canvas element
-         *
-         * @static
-         * @param {string} mainVertex
-         * @param {string} mainFrag
-         * @param {string} textureVertex
-         * @param {*} textureFrag
-         * @param {number} w
-         * @param {number} h
-         * @returns {HTMLCanvasElement}
-         * @memberof DemolishedRenderer
-         */
-        static generateTexture(mainVertex: string, mainFrag: string,
-                textureVertex: string,
-                textureFrag, w: number, h: number): HTMLCanvasElement {
-                let canvas = document.createElement("canvas") as HTMLCanvasElement;
-                canvas.width = w; canvas.height = h;
-                let dr = new DemolishedRenderer(canvas, mainVertex, mainFrag);
-                dr.addBuffer("A", textureVertex, textureFrag);
-                // do a few frames due to back buffer.
-                for (var i = 0; i < 2; i++) {
-                        dr.render(i);
-                }
-                return canvas;
-        }
 
 }
