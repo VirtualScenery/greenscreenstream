@@ -1,3 +1,16 @@
+/**
+ * GLSL fragment shader source code as a string.
+ *
+ * This shader samples a texture (`A`) using normalized screen coordinates
+ * and outputs the resulting color to `fragColor`.
+ *
+ * Uniforms:
+ * - `resolution`: The resolution of the output in pixels (vec2).
+ * - `A`: The input texture (sampler2D).
+ *
+ * Usage:
+ * Assign this constant to a shader program that expects the above uniforms.
+ */
 export const MAIN_FRAG: string = `
 
     uniform vec2 resolution;
@@ -9,6 +22,19 @@ export const MAIN_FRAG: string = `
     }
 `;
 
+/**
+ * GLSL vertex shader source code for the main vertex shader.
+ *
+ * This shader takes a 2D position attribute (`pos`) as input and sets the `gl_Position`
+ * for rendering. It also declares an output variable `fragColor`, though it is not assigned
+ * in this shader. The shader is intended for use in rendering full-screen quads or similar
+ * geometry where only position is required.
+ *
+ * @remarks
+ * - `layout(location = 0) in vec2 pos;` specifies the input attribute location.
+ * - `gl_Position` is set using the input position with z = 0.0 and w = 1.0.
+ * - The output `fragColor` is declared for compatibility with fragment shaders.
+ */
 export const MAIN_VERT: string = `
     layout(location = 0) in vec2 pos;
     out vec4 fragColor;
@@ -16,6 +42,19 @@ export const MAIN_VERT: string = `
         gl_Position = vec4(pos.xy,0.0,1.0);
     }
 `;
+/**
+ * GLSL vertex shader source code for a simple buffer.
+ *
+ * This shader takes a 2D position attribute (`pos`) as input and sets the `gl_Position`
+ * for each vertex. It also declares an output variable `fragColor`, which can be used
+ * in the fragment shader stage. The shader is intended for use in rendering full-screen
+ * quads or similar geometry where only position data is required.
+ *
+ * @remarks
+ * - The input attribute `pos` is expected at location 0.
+ * - The output `fragColor` is declared but not assigned in this shader; it is typically
+ *   used in the fragment shader.
+ */
 export const BUFFER_VERT: string = `
     layout(location = 0) in vec2 pos;
     out vec4 fragColor;
@@ -24,6 +63,29 @@ export const BUFFER_VERT: string = `
     }
 `;
 
+/**
+ * GLSL fragment shader source for chroma key compositing.
+ *
+ * This shader blends a foreground (webcam) texture with a background texture
+ * using chroma keying (typically for green screen effects). It converts colors
+ * from RGB to YUV space to perform color similarity checks, allowing for
+ * configurable tolerance via the `maskRange` uniform.
+ *
+ * Uniforms:
+ * - `time`: Current time (unused in this shader).
+ * - `resolution`: The resolution of the output image.
+ * - `webcam`: Foreground texture (e.g., webcam feed).
+ * - `background`: Background texture to composite behind the foreground.
+ * - `chromaKey`: The chroma key color to remove (in RGBA).
+ * - `maskRange`: vec2 specifying the inner and outer tolerance for chroma keying.
+ *
+ * Outputs:
+ * - `fragColor`: The final composited color for each fragment.
+ *
+ * The shader uses a helper function `colorclose` to determine how close a pixel's
+ * color is to the chroma key color in YUV space, and blends the foreground and
+ * background accordingly.
+ */
 export const BUFFER_FRAG: string = `
     uniform float time;
     uniform vec2 resolution;

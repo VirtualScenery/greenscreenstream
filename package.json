@@ -1,6 +1,6 @@
 {
   "name": "@virtualscenery/greenscreenstream",
-  "version": "3.0.2",
+  "version": "3.1.1",
   "description": "Genereate new MediaStreams or Canvas elements based on MediaStreams (webcam) with any background image/video. Greenscreen your webcam and enable virtual backgrounds in your web applications. ",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -51,14 +51,14 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@tensorflow-models/body-pix": "^2.2.0",
-    "@tensorflow/tfjs": "^3.11.0",
-    "@tensorflow/tfjs-backend-cpu": "^3.11.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.11.0",
+    "@tensorflow-models/body-pix": "^2.2.1",
+    "@tensorflow/tfjs-backend-cpu": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
     "quantize": "^1.0.2"
   },
   "devDependencies": {
     "@types/webgl2": "0.0.5",
-    "typescript": "^4.5.5"
+    "typescript": "^5.8.0"
   }
 }

@@ -1,0 +1,11 @@
+{
+  "entryPoints": ["src"],
+  "out": "documentation", // Or "docs"
+  "tsconfig": "tsconfig.json", // Point to your tsconfig
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeProtected": true,
+  "hideGenerator": true,
+  "theme": "default"
+  // Add more options as needed
+}
