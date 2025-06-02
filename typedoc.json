@@ -1,6 +1,6 @@
 {
   "entryPoints": ["src"],
-  "out": "documentation", // Or "docs"
+  "out": "docs", // Or "docs"
   "tsconfig": "tsconfig.json", // Point to your tsconfig
   "excludePrivate": true,
   "excludeInternal": true,
